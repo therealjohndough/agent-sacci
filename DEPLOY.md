@@ -1,192 +1,155 @@
 # Sacci Brand Hub — SSH & Git Deployment to SiteGround
 
-This document covers:
-1. Generating an SSH key and adding it to SiteGround
-2. Creating a bare git repo on the server with a `post-receive` hook
-3. Adding the server as a git remote
-4. Day-to-day deploy workflow
+## Connection Details
 
----
-
-## Prerequisites
-
-| What | Where to find it |
+| What | Value |
 |---|---|
-| SiteGround SSH hostname | Site Tools → Devs → SSH Keys Manager → *Connection details* |
-| SiteGround SSH username | Same panel (format: `uXXXXXXXX`) |
-| SSH port | **18765** (SiteGround non-standard port) |
-| Server deploy path | `/home/<user>/public_html/sacci_brand_hub` |
+| SSH hostname | `ssh.sacci.space` |
+| SSH username | `u2520-3v1nc5i4btry` |
+| SSH port | `18765` |
+| Server deploy path | `/home/u2520-3v1nc5i4btry/public_html/sacci_brand_hub` |
+| Bare repo path | `/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git` |
 
 ---
 
-## Step 1 — Generate an SSH Key Pair (local machine)
+## Step 1 — Add the Public Key to SiteGround
 
-```bash
-ssh-keygen -t ed25519 -C "sacci-deploy" -f ~/.ssh/sacci_siteground
+Go to **Site Tools → Devs → SSH Keys Manager → Add New SSH Key** and paste
+the following public key exactly as shown:
+
+```
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDarkjztQ9jv6K/eRoctbO2U/YVXIUd8KQIURO7Q3L2K8aDtfn85UWDlU0p15kjx6dQBKSYaEBA1Nwy28MgFffBpDzaqEjcAnOH/q6W1jWNOlx5XyWMgjBRUFA0SkI2lQpX4+B+d3RYZmDDfrtjKiIOoa9cOM21W0XwV+cUrU7YnmKpB8IZcjiJ9V8SnD9AWGwCutaWKFmZo9tSrY00CdQQas4uwZhatDn7VFsJ35KFxc1aaY1n+l7wxz0luOs9uBwnzb1d6+39U366FQqeNuRfa04O54YPuNmKTacVF5znbP57AQmxeC82zNurSt+C9H3q6eL2g0dh6WKQwJlEEhi6fmo5xhZnb7r4SyoLaBRgPvUP15WvOrgki8HlJRO3nUssTKTVPC+n4oY+dC9zhhTPmXwhdOUnhKTT8WpOnnD9CJT9oZ0xbyWRzyVFSnbFL2iklAJ0gFTwRWkvSHU2kJhk8MicRRji++ISF6eiT8JY7bndoXRyqDh/T0C5VaQ0/eZ7C/JiI5QQmvceQvkjcr7OArQfTrdMavdX/u6k/7+FI5ZUsqtlgpOuM8j/7BU7djw2gssVYaZbJzWrr13FWZWmCtJcXI6rP9tMVxB5P7oxdFOIPXJnmQnLXdr8RDMiPaJ4p4oTa7EM59atUIgtEzPOesNuWGwX/D/FxU210bKRXw== sacci-deploy
 ```
 
-This creates:
-- `~/.ssh/sacci_siteground` — private key (keep secret, never commit)
-- `~/.ssh/sacci_siteground.pub` — public key (upload to SiteGround)
+The private key is stored at `/home/user/.ssh/sacci_siteground_rsa` in this
+agent environment and is already configured in `/home/user/.ssh/config`.
 
 ---
 
-## Step 2 — Add the Public Key to SiteGround
+## Step 2 — Test the SSH Connection
 
-1. Copy the public key:
-   ```bash
-   cat ~/.ssh/sacci_siteground.pub
-   ```
-2. In SiteGround: **Site Tools → Devs → SSH Keys Manager → Add New SSH Key**
-3. Paste the public key content and save.
+Once the public key is saved in SiteGround, run:
 
----
-
-## Step 3 — Configure SSH Locally
-
-Add an entry to `~/.ssh/config` so you can use a short alias:
-
-```
-Host sacci-sg
-    HostName       <your-sg-ssh-hostname>   # e.g. premium123.web-hosting.com
-    User           <your-sg-ssh-username>   # e.g. u12345678
-    Port           18765
-    IdentityFile   ~/.ssh/sacci_siteground
-    IdentitiesOnly yes
-```
-
-Test the connection:
 ```bash
 ssh sacci-sg
+# Expected: a shell prompt on the SiteGround server
+# (u2520-3v1nc5i4btry@sg-server-hostname:~$)
 ```
-
-You should get a shell prompt on the SiteGround server.
 
 ---
 
-## Step 4 — Create a Bare Git Repo on the Server
+## Step 3 — Create the Bare Git Repo on the Server
 
-SSH into the server and run:
+SSH in and run these commands once:
 
 ```bash
-# Create a directory for the bare repo (outside public_html)
+ssh sacci-sg << 'SETUP'
+set -e
+
+# Bare repo lives outside public_html
 mkdir -p ~/repos/sacci_brand_hub.git
 cd ~/repos/sacci_brand_hub.git
 git init --bare
 
-# Ensure the deploy target exists
-mkdir -p ~/public_html/sacci_brand_hub
+# Confirm deploy target exists (already uploaded via File Manager)
+ls ~/public_html/sacci_brand_hub/index.php
+
+echo "=== Bare repo created ==="
+SETUP
 ```
 
 ---
 
-## Step 5 — Create the `post-receive` Hook
-
-Still on the server, create the hook file:
+## Step 4 — Create the `post-receive` Hook on the Server
 
 ```bash
+ssh sacci-sg << 'HOOK_SETUP'
 cat > ~/repos/sacci_brand_hub.git/hooks/post-receive << 'HOOK'
 #!/usr/bin/env bash
 set -e
-
 DEPLOY_DIR="$HOME/public_html/sacci_brand_hub"
 GIT_WORK_TREE="$DEPLOY_DIR" git checkout -f main
-
 echo ""
 echo "=== Deployed to $DEPLOY_DIR ==="
 HOOK
-
 chmod +x ~/repos/sacci_brand_hub.git/hooks/post-receive
+echo "=== post-receive hook installed ==="
+HOOK_SETUP
 ```
-
-> **Note:** The hook checks out the `main` branch. If your production branch is
-> different (e.g. `master` or `claude/setup-sacci-cms-W2QPe`), change `main`
-> in the hook accordingly.
 
 ---
 
-## Step 6 — Add the Server as a Git Remote (local machine)
+## Step 5 — Add the Server as a Git Remote
+
+Run this once in the local repo:
 
 ```bash
-git remote add siteground ssh://sacci-sg/home/<sg-username>/repos/sacci_brand_hub.git
+git remote add siteground \
+  ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git
 ```
 
 Verify:
 ```bash
 git remote -v
-# siteground  ssh://sacci-sg/home/<sg-username>/repos/sacci_brand_hub.git (fetch)
-# siteground  ssh://sacci-sg/home/<sg-username>/repos/sacci_brand_hub.git (push)
+# siteground  ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git (fetch)
+# siteground  ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git (push)
 ```
 
 ---
 
-## Step 7 — First Deploy
+## Step 6 — First Deploy
 
 ```bash
-# Push the target branch to SiteGround
 git push siteground main
 ```
 
-The `post-receive` hook will automatically check out the files into
-`~/public_html/sacci_brand_hub`.
+The `post-receive` hook checks out all tracked files into
+`/home/u2520-3v1nc5i4btry/public_html/sacci_brand_hub` automatically.
 
 ---
 
 ## Day-to-Day Deploy Workflow
 
 ```bash
-# 1. Make changes locally
-# 2. Commit
+# 1. Make + commit changes
 git add <files>
 git commit -m "describe change"
 
-# 3. Push to GitHub (source of truth)
+# 2. Push to GitHub (source of truth)
 git push origin main
 
-# 4. Push to SiteGround (deploy)
+# 3. Deploy to SiteGround
 git push siteground main
 ```
 
 ---
 
-## Important: Files NOT Tracked in Git
+## Files That Live ONLY on the Server (not in git)
 
-These files exist on the server but must **not** be committed to the repo:
-
-| File | Why |
+| File / Dir | Why |
 |---|---|
-| `.env` | Contains DB credentials and secrets |
-| `vendor/` | Generated by Composer; install on server separately |
+| `.env` | DB credentials + secrets — created by installer |
+| `vendor/` | Composer dependencies — install on server separately |
 | `storage/` | User-uploaded files |
 
-### First-time server setup after deploy
-
-After the very first `git push siteground main`, SSH in and run:
+After the **first deploy** via git, SSH in and verify these are intact:
 
 ```bash
-cd ~/public_html/sacci_brand_hub
-
-# Install Composer dependencies
-composer install --no-dev --optimize-autoloader
-
-# Verify .env exists (was created by the web installer)
-ls -la .env
+ssh sacci-sg "ls -la ~/public_html/sacci_brand_hub/.env ~/public_html/sacci_brand_hub/vendor/"
 ```
 
-If `.env` was lost, re-create it by running the installer at
-`https://sacci.space/sacci_brand_hub/install/` or copy from a backup.
+If `vendor/` is missing:
+```bash
+ssh sacci-sg "cd ~/public_html/sacci_brand_hub && composer install --no-dev --optimize-autoloader"
+```
 
 ---
 
-## Verify the Deploy Worked
+## Verify the Deployment
 
 ```bash
-# SSH into server and check file timestamps
-ssh sacci-sg "ls -la ~/public_html/sacci_brand_hub/"
-
-# Or curl the site
-curl -I https://sacci.space/sacci_brand_hub/
-# Expected: HTTP/2 302 → redirects to /sacci_brand_hub/login
+curl -sI https://sacci.space/sacci_brand_hub/
+# Expected: HTTP/2 302  Location: .../sacci_brand_hub/login
 ```
 
 ---
@@ -194,11 +157,11 @@ curl -I https://sacci.space/sacci_brand_hub/
 ## Rollback
 
 ```bash
-# Find the commit to roll back to
+# Find the commit to revert to
 git log --oneline -10
 
-# Push that commit to SiteGround
-git push siteground <commit-sha>:main --force
+# Force-push that commit as the tip of main on SiteGround
+git push siteground <commit-sha>:refs/heads/main --force
 ```
 
 ---
@@ -207,8 +170,9 @@ git push siteground <commit-sha>:main --force
 
 | Problem | Fix |
 |---|---|
-| `Permission denied (publickey)` | Check the key was added in SiteGround SSH Keys Manager; confirm `IdentityFile` in `~/.ssh/config` |
-| `port 22: Connection refused` | SiteGround uses port **18765**, not 22 |
-| Hook runs but files don't update | Confirm `GIT_WORK_TREE` path is correct; check hook has execute permission (`chmod +x`) |
-| White page after deploy | SSH in, check `~/public_html/sacci_brand_hub/.env` exists and DB credentials are correct |
-| `vendor/` missing after deploy | SSH in and run `composer install --no-dev` in the deploy dir |
+| `Permission denied (publickey)` | Re-check the key was saved in Site Tools → SSH Keys Manager |
+| `Connection refused` on port 22 | Use port **18765** — already set in `~/.ssh/config` |
+| Hook runs but files don't change | Confirm the branch name in the hook matches what you push (`main`) |
+| White page after deploy | SSH in and check `.env` exists; check SiteGround error logs |
+| `vendor/` missing | `ssh sacci-sg "cd ~/public_html/sacci_brand_hub && composer install --no-dev"` |
+| `git push` hangs | SiteGround firewall may block outbound SSH; try from a different network |
