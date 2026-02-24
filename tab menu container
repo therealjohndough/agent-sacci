@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Announcement Menu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: #1d1d29;
+    padding: 2rem;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .announcement-wrapper {
+    width: 90%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Tab bar ── */
+  .radio-inputs {
+    position: relative;
+    display: flex;
+    border-radius: 0.5rem 0.5rem 0 0;
+    background-color: #70c489;
+    font-size: 14px;
+    padding: 1rem 1rem 0 1rem;
+    gap: 2px;
+  }
+
+  .radio-inputs .radio input { display: none; }
+
+  .radio-inputs .radio .name {
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    border: none;
+    padding: 0.5rem 0.9rem;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .radio-inputs .radio input:checked + .name {
+    background-color: #e8e8e8;
+    color: #1d1d29;
+    font-weight: 600;
+  }
+
+  .radio-inputs .radio input + .name:hover { color: #fff; }
+  .radio-inputs .radio input:checked + .name:hover { color: #1d1d29; }
+
+  .radio-inputs .radio input:checked + .name::after,
+  .radio-inputs .radio input:checked + .name::before {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #70c489;
+    bottom: 0;
+  }
+  .radio-inputs .radio input:checked + .name::after {
+    right: -10px;
+    border-bottom-left-radius: 300px;
+    box-shadow: -3px 3px 0px 3px #e8e8e8;
+  }
+  .radio-inputs .radio input:checked + .name::before {
+    left: -10px;
+    border-bottom-right-radius: 300px;
+    box-shadow: 3px 3px 0px 3px #e8e8e8;
+  }
+
+  /* ── Panel ── */
+  .announcement-panel {
+    background: #e8e8e8;
+    border-radius: 0 0.5rem 0.5rem 0.5rem;
+    padding: 1.4rem 1.4rem 1.2rem;
+    min-height: 180px;
+  }
+
+  .panel-content { display: none; animation: fadeIn .2s ease; }
+  .panel-content.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Announcement card ── */
+  .announcement-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .announcement-card .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    width: fit-content;
+  }
+
+  .badge.urgent  { background: #ff4d4d22; color: #c0392b; }
+  .badge.info    { background: #3498db22; color: #2271b3; }
+  .badge.update  { background: #70c48922; color: #2d8e50; }
+  .badge.event   { background: #f39c1222; color: #b97a00; }
+
+  .announcement-card h3 {
+    font-size: 1rem;
+    color: #1d1d29;
+    line-height: 1.3;
+  }
+
+  .announcement-card p {
+    font-size: 0.845rem;
+    color: #555;
+    line-height: 1.55;
+  }
+
+  .announcement-card .meta {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #d0d0d0;
+    margin: 0.8rem 0;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.45rem 1rem;
+    background: #70c489;
+    color: #fff;
+    border: none;
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .cta-btn:hover { background: #5aad73; }
+</style>
+</head>
+<body>
+
+<div class="announcement-wrapper">
+
+  <!-- Tab Bar -->
+  <div class="radio-inputs">
+    <label class="radio">
+      <input type="radio" name="announce-tab" id="tab-news" checked />
+      <span class="name">📢 News</span>
+    </label>
+    <label class="radio">
+      <input type="radio" name="announce-tab" id="tab-events" />
+      <span class="name">🗓 Events</span>
+    </label>
+    <label class="radio">
+      <input type="radio" name="announce-tab" id="tab-updates" />
+      <span class="name">⚡ Updates</span>
+    </label>
+    <label class="radio">
+      <input type="radio" name="announce-tab" id="tab-alerts" />
+      <span class="name">🚨 Alerts</span>
+    </label>
+  </div>
+
+  <!-- Panel -->
+  <div class="announcement-panel">
+
+    <!-- News -->
+    <div class="panel-content active" id="panel-news">
+      <div class="announcement-card">
+        <span class="badge info">📰 Latest</span>
+        <h3>The Other Magazine — Spring Issue Drop</h3>
+        <p>Our Spring 2025 issue is live, featuring deep dives into Hudson Valley's underground scenes, Long Island's emerging cannabis culture, and a retrospective on counterculture design.</p>
+        <div class="meta">🕐 2 hours ago &nbsp;·&nbsp; The Other Magazine</div>
+        <button class="cta-btn">Read the Issue →</button>
+      </div>
+    </div>
+
+    <!-- Events -->
+    <div class="panel-content" id="panel-events">
+      <div class="announcement-card">
+        <span class="badge event">🎟 Upcoming</span>
+        <h3>MJBowl 2025 — Buffalo, NY</h3>
+        <p>Case Study Labs is a proud sponsor and creative partner for MJBowl 2025. Come see the work in person — premium cannabis branding, live activations, and industry panels.</p>
+        <hr class="divider">
+        <div class="meta">📅 March 15, 2025 &nbsp;·&nbsp; Buffalo, NY</div>
+        <button class="cta-btn">Get Tickets →</button>
+      </div>
+    </div>
+
+    <!-- Updates -->
+    <div class="panel-content" id="panel-updates">
+      <div class="announcement-card">
+        <span class="badge update">✅ Site Update</span>
+        <h3>New CMS Migration Underway</h3>
+        <p>The Other Magazine is migrating to a custom PHP-based Editorial CMS. Expect faster load times, color-coded editorial sections, and atmospheric scroll effects. Going live soon.</p>
+        <hr class="divider">
+        <div class="meta">🕐 Yesterday &nbsp;·&nbsp; Dev Team</div>
+        <button class="cta-btn">Learn More →</button>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="panel-content" id="panel-alerts">
+      <div class="announcement-card">
+        <span class="badge urgent">⚠️ Action Needed</span>
+        <h3>New York Cannabis Compliance Deadline</h3>
+        <p>All licensed dispensaries must update their digital advertising materials to meet the latest OCM compliance guidelines by end of month. Contact Case Study Labs for a rapid compliance audit.</p>
+        <hr class="divider">
+        <div class="meta">📅 Deadline: March 31, 2025 &nbsp;·&nbsp; OCM</div>
+        <button class="cta-btn">Contact Us →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.radio-inputs .radio input');
+  const panels = {
+    'tab-news':    'panel-news',
+    'tab-events':  'panel-events',
+    'tab-updates': 'panel-updates',
+    'tab-alerts':  'panel-alerts',
+  };
+
+  tabs.forEach(tab => {
+    tab.addEventListener('change', () => {
+      document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+      document.getElementById(panels[tab.id])?.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
