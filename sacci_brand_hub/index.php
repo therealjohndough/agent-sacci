@@ -31,9 +31,15 @@ spl_autoload_register(function ($class) {
 // Load environment variables
 Config\loadEnv(__DIR__ . '/.env');
 
+// Determine the application base path for subfolder installs (e.g. /sacci_brand_hub).
+// SCRIPT_NAME is e.g. /sacci_brand_hub/index.php when installed in a subfolder.
+define('APP_BASE', rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\'));
+
 // Create router and register routes
 $router = new Router();
+$router->setBasePath(APP_BASE);
 
+$router->add('GET', '/', [App\Controllers\AuthController::class, 'login']);
 $router->add('GET', '/login', [App\Controllers\AuthController::class, 'login']);
 $router->add('POST', '/login', [App\Controllers\AuthController::class, 'login']);
 $router->add('GET', '/logout', [App\Controllers\AuthController::class, 'logout']);

@@ -10,6 +10,15 @@ use Exception;
 class Router
 {
     private array $routes = [];
+    private string $basePath = '';
+
+    /**
+     * Set the base path to strip from incoming URIs (e.g. '/sacci_brand_hub').
+     */
+    public function setBasePath(string $path): void
+    {
+        $this->basePath = rtrim($path, '/');
+    }
 
     /**
      * Register a route with HTTP method(s).
@@ -26,7 +35,12 @@ class Router
     public function dispatch(string $method, string $uri): mixed
     {
         $method = strtoupper($method);
-        $path = $this->normalizePath(parse_url($uri, PHP_URL_PATH) ?? '/');
+        $rawPath = parse_url($uri, PHP_URL_PATH) ?? '/';
+        // Strip the subfolder prefix so routes can be defined without it.
+        if ($this->basePath !== '' && str_starts_with($rawPath, $this->basePath)) {
+            $rawPath = substr($rawPath, strlen($this->basePath));
+        }
+        $path = $this->normalizePath($rawPath ?: '/');
         $handler = $this->routes[$method][$path] ?? null;
         if (!$handler) {
             http_response_code(404);
