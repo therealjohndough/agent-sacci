@@ -36,14 +36,12 @@ class AuthController extends BaseController
             return;
         }
         Auth::login($user['id']);
-        header('Location: /app');
-        exit;
+        $this->redirect('/app');
     }
 
     public function logout(): void
     {
         Auth::logout();
-        header('Location: /login');
-        exit;
+        $this->redirect('/login');
     }
 }

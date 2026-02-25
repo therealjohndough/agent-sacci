@@ -1,74 +1,91 @@
-# AGENTS.md — Sacci Brand Hub
+# AGENTS.md
 
-Quick reference for AI coding agents. See CLAUDE.md for full documentation.
+Instructions for AI coding agents working on the Sacci Brand Hub project.
 
-## Stack
+## Project Overview
 
-- PHP 8.2+ / MySQL 8 / Apache
-- No build step, no Node.js, no test suite
-- Single dependency: PHPMailer ^6.9 (via Composer)
+A lightweight PHP 8.2 CMS for the House of Sacci brand portal, deployed to SiteGround hosting in a subfolder (`/sacci_brand_hub`).
 
-## Project Structure
+## Directory Structure
 
 ```
-sacci_brand_hub/           # Document root
-├── index.php              # Front controller, all routes registered here
-├── config/config.php      # loadEnv() and env() helpers
-├── core/                  # Auth, Csrf, Database, Router, View
-├── app/controllers/       # Extend BaseController
-├── app/models/            # Extend BaseModel
-├── app/views/             # Plain PHP templates
-├── migrations/            # Sequential PHP scripts (001_, 002_, ...)
-└── storage/               # File uploads (not web-accessible)
+sacci_brand_hub/          # Main application directory
+├── app/                  # Controllers, models, views (PSR-4: App\)
+├── core/                 # Framework core (PSR-4: Core\)
+├── config/               # Configuration loader
+├── migrations/           # Database migrations
+├── install/              # Web installer
+├── .env                  # Environment config (not in git)
+├── vendor/               # Composer deps (not in git)
+└── storage/              # User uploads (not in git)
 ```
 
-## Setup Commands
+## Requirements
 
-```bash
-cd sacci_brand_hub
-composer install
-cp .env.example .env       # Edit DB credentials
-php migrations/001_create_tables.php
-php migrations/002_seed_data.php
-php -S localhost:8000 -t sacci_brand_hub sacci_brand_hub/index.php
-```
+- PHP >= 8.2
+- Composer for dependencies
 
 ## Environment Variables
 
-Required in `sacci_brand_hub/.env`:
-- `APP_NAME`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+Stored in `sacci_brand_hub/.env` (never committed). Loaded via `Config\loadEnv()`. Access with `Config\env('KEY', $default)`.
 
-Optional (SMTP): `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`
+Required variables (see installer):
+- Database credentials
+- Application secrets
 
-## Code Patterns
+## Build & Dependencies
 
-**Controllers**: Extend `BaseController`, call `$this->requireLogin()`, use `$this->render('view/path', $data)`
+```bash
+cd sacci_brand_hub
+composer install --no-dev --optimize-autoloader
+```
 
-**Models**: Extend `BaseModel`, set `protected static string $table`, use `find()`, `findBy()`, `create()`, `update()`
+## Routing & Subfolder Support
 
-**Views**: Plain PHP, escape with `htmlspecialchars()`, include CSRF: `<input type="hidden" name="_csrf" value="<?= $csrf ?>">`
+The app runs in a subfolder (`/sacci_brand_hub`). Key patterns:
 
-**Routes**: Register in `index.php` via `$router->add('METHOD', '/path', [Controller::class, 'action'])`
+- **APP_BASE constant**: Auto-detected from `SCRIPT_NAME`, available globally
+- **Router::setBasePath()**: Strips subfolder prefix from URIs
+- **BaseController::redirect()**: Use `$this->redirect('/path')` — it prepends `APP_BASE` automatically
+- **Never hardcode** absolute paths like `/login`; use the redirect helper
 
-## Security Rules
+Routes are defined in `sacci_brand_hub/index.php` without the subfolder prefix:
+```php
+$router->add('GET', '/login', [AuthController::class, 'login']);
+```
 
-1. Always use PDO prepared statements
-2. Always escape output with `htmlspecialchars()`
-3. Validate CSRF on all POST requests
-4. Call `$this->requireLogin()` on protected actions
-5. Use `password_hash()` / `password_verify()`
-6. Serve files via `AssetController@download`, not direct paths
+## .htaccess
 
-## Adding Features
+```apache
+RewriteBase /sacci_brand_hub/
+```
+All requests route through `index.php`.
 
-- **Route**: Add to `index.php` before `$router->dispatch()`
-- **Controller**: Create in `app/controllers/`, extend `BaseController`
-- **Model**: Create in `app/models/`, extend `BaseModel`, set `$table`
-- **View**: Create in `app/views/`
-- **Migration**: Add `migrations/00N_description.php`, run manually
+## Deployment
 
-## Git Workflow
+See `DEPLOY.md` for full SSH/Git deployment to SiteGround.
 
-- Main branch: `master`
-- AI branches: `claude/<description>-<session-id>`
-- No CI/CD — deploy via FTP/SSH
+Quick deploy:
+```bash
+git push origin main          # GitHub (source of truth)
+git push siteground main      # SiteGround production
+```
+
+Remote: `siteground` → `ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git`
+
+## Files Excluded from Git
+
+Per `.gitignore`:
+- `sacci_brand_hub/.env`
+- `sacci_brand_hub/vendor/`
+- `sacci_brand_hub/storage/`
+- `*.zip`
+
+These must exist on the server but are not version-controlled.
+
+## Code Style
+
+- PSR-4 autoloading
+- Controllers extend `BaseController`
+- Use `$this->redirect()` for redirects (subfolder-aware)
+- Use `$this->render()` for views

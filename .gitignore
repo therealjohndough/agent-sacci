@@ -1,0 +1,4 @@
+sacci_brand_hub/.env
+sacci_brand_hub/vendor/
+sacci_brand_hub/storage/
+*.zip
