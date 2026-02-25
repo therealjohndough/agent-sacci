@@ -39,10 +39,13 @@ class Router
         // Strip the subfolder prefix so routes can be defined without it.
         if ($this->basePath !== '' && str_starts_with($rawPath, $this->basePath)) {
             $baseLen = strlen($this->basePath);
-            // Only strip when the base path is a full segment (exact match or followed by '/')
-            if (strlen($rawPath) === $baseLen || $rawPath[$baseLen] === '/') {
-                $rawPath = substr($rawPath, $baseLen);
-            }
+        $rawPath = parse_url($uri, PHP_URL_PATH) ?? '/';
+        // Strip the subfolder prefix so routes can be defined without it.
+        if (
+            $this->basePath !== '' &&
+            ($rawPath === $this->basePath || str_starts_with($rawPath, $this->basePath . '/'))
+        ) {
+            $rawPath = substr($rawPath, strlen($this->basePath));
         }
         $path = $this->normalizePath($rawPath ?: '/');
         $handler = $this->routes[$method][$path] ?? null;
