@@ -2,27 +2,38 @@
 
 ## Connection Details
 
-| What | Value |
+> **Note:** Real connection values (hostname, username, port, paths) are stored in the
+> private project runbook. Replace every `<PLACEHOLDER>` below before running any command.
+
+| What | Placeholder |
 |---|---|
-| SSH hostname | `ssh.sacci.space` |
-| SSH username | `u2520-3v1nc5i4btry` |
-| SSH port | `18765` |
-| Server deploy path | `/home/u2520-3v1nc5i4btry/public_html/sacci_brand_hub` |
-| Bare repo path | `/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git` |
+| SSH hostname | `<YOUR_SSH_HOSTNAME>` |
+| SSH username | `<YOUR_SSH_USERNAME>` |
+| SSH port | `<YOUR_SSH_PORT>` |
+| Server deploy path | `/home/<YOUR_SSH_USERNAME>/public_html/sacci_brand_hub` |
+| Bare repo path | `/home/<YOUR_SSH_USERNAME>/repos/sacci_brand_hub.git` |
 
 ---
 
 ## Step 1 — Add the Public Key to SiteGround
 
 Go to **Site Tools → Devs → SSH Keys Manager → Add New SSH Key** and paste
-the following public key exactly as shown:
+your public key. Generate a dedicated deploy keypair if you don't have one:
+
+```bash
+ssh-keygen -t ed25519 -C "sacci-deploy" -f ~/.ssh/sacci_siteground_ed25519
+# Then add ~/.ssh/sacci_siteground_ed25519.pub in SiteGround's SSH Keys Manager
+```
+
+Add an entry to `~/.ssh/config` so subsequent commands can use the `sacci-sg` alias:
 
 ```
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDarkjztQ9jv6K/eRoctbO2U/YVXIUd8KQIURO7Q3L2K8aDtfn85UWDlU0p15kjx6dQBKSYaEBA1Nwy28MgFffBpDzaqEjcAnOH/q6W1jWNOlx5XyWMgjBRUFA0SkI2lQpX4+B+d3RYZmDDfrtjKiIOoa9cOM21W0XwV+cUrU7YnmKpB8IZcjiJ9V8SnD9AWGwCutaWKFmZo9tSrY00CdQQas4uwZhatDn7VFsJ35KFxc1aaY1n+l7wxz0luOs9uBwnzb1d6+39U366FQqeNuRfa04O54YPuNmKTacVF5znbP57AQmxeC82zNurSt+C9H3q6eL2g0dh6WKQwJlEEhi6fmo5xhZnb7r4SyoLaBRgPvUP15WvOrgki8HlJRO3nUssTKTVPC+n4oY+dC9zhhTPmXwhdOUnhKTT8WpOnnD9CJT9oZ0xbyWRzyVFSnbFL2iklAJ0gFTwRWkvSHU2kJhk8MicRRji++ISF6eiT8JY7bndoXRyqDh/T0C5VaQ0/eZ7C/JiI5QQmvceQvkjcr7OArQfTrdMavdX/u6k/7+FI5ZUsqtlgpOuM8j/7BU7djw2gssVYaZbJzWrr13FWZWmCtJcXI6rP9tMVxB5P7oxdFOIPXJnmQnLXdr8RDMiPaJ4p4oTa7EM59atUIgtEzPOesNuWGwX/D/FxU210bKRXw== sacci-deploy
+Host sacci-sg
+  HostName     <YOUR_SSH_HOSTNAME>
+  User         <YOUR_SSH_USERNAME>
+  Port         <YOUR_SSH_PORT>
+  IdentityFile ~/.ssh/sacci_siteground_ed25519
 ```
-
-The private key is stored at `/home/user/.ssh/sacci_siteground_rsa` in this
-agent environment and is already configured in `/home/user/.ssh/config`.
 
 ---
 
@@ -33,7 +44,7 @@ Once the public key is saved in SiteGround, run:
 ```bash
 ssh sacci-sg
 # Expected: a shell prompt on the SiteGround server
-# (u2520-3v1nc5i4btry@sg-server-hostname:~$)
+# (<YOUR_SSH_USERNAME>@sg-server-hostname:~$)
 ```
 
 ---
@@ -85,14 +96,14 @@ Run this once in the local repo:
 
 ```bash
 git remote add siteground \
-  ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git
+  ssh://sacci-sg/home/<YOUR_SSH_USERNAME>/repos/sacci_brand_hub.git
 ```
 
 Verify:
 ```bash
 git remote -v
-# siteground  ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git (fetch)
-# siteground  ssh://sacci-sg/home/u2520-3v1nc5i4btry/repos/sacci_brand_hub.git (push)
+# siteground  ssh://sacci-sg/home/<YOUR_SSH_USERNAME>/repos/sacci_brand_hub.git (fetch)
+# siteground  ssh://sacci-sg/home/<YOUR_SSH_USERNAME>/repos/sacci_brand_hub.git (push)
 ```
 
 ---
@@ -104,7 +115,7 @@ git push siteground main
 ```
 
 The `post-receive` hook checks out all tracked files into
-`/home/u2520-3v1nc5i4btry/public_html/sacci_brand_hub` automatically.
+`/home/<YOUR_SSH_USERNAME>/public_html/sacci_brand_hub` automatically.
 
 ---
 
@@ -149,7 +160,7 @@ ssh sacci-sg "cd ~/public_html/sacci_brand_hub && composer install --no-dev --op
 ## Verify the Deployment
 
 ```bash
-curl -sI https://sacci.space/sacci_brand_hub/
+curl -sI https://<YOUR_DOMAIN>/sacci_brand_hub/
 # Expected: HTTP/2 302  Location: .../sacci_brand_hub/login
 ```
 
@@ -172,7 +183,7 @@ git push siteground <commit-sha>:refs/heads/main --force
 | Problem | Fix |
 |---|---|
 | `Permission denied (publickey)` | Re-check the key was saved in Site Tools → SSH Keys Manager |
-| `Connection refused` on port 22 | Use port **18765** — already set in `~/.ssh/config` |
+| `Connection refused` on port 22 | SiteGround uses a non-default port — ensure the `Port` in `~/.ssh/config` under `Host sacci-sg` matches what was configured in Step 1 |
 | Hook runs but files don't change | Confirm the branch name in the hook matches what you push (`main`) |
 | White page after deploy | SSH in and check `.env` exists; check SiteGround error logs |
 | `vendor/` missing | `ssh sacci-sg "cd ~/public_html/sacci_brand_hub && composer install --no-dev"` |
