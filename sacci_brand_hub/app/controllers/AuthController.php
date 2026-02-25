@@ -19,6 +19,13 @@ class AuthController extends BaseController
         ]);
     }
 
+    /**
+     * Process a login POST: validate CSRF token, authenticate credentials, and route accordingly.
+     *
+     * If the CSRF token is invalid, execution is terminated with the message "Invalid CSRF token".
+     * If authentication fails, re-renders the 'auth/login' view with an "Invalid credentials" error and a fresh CSRF token.
+     * On successful authentication, logs the user in and redirects to '/app'.
+     */
     private function handleLogin(): void
     {
         $email = $_POST['email'] ?? '';
@@ -39,6 +46,9 @@ class AuthController extends BaseController
         $this->redirect('/app');
     }
 
+    /**
+     * Logs out the current user and redirects to the login page.
+     */
     public function logout(): void
     {
         Auth::logout();
