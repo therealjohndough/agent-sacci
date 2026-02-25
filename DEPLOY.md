@@ -12,17 +12,35 @@
 
 ---
 
-## Step 1 — Add the Public Key to SiteGround
+## Step 1 — Generate a Deploy SSH Key Pair (local machine)
 
-Go to **Site Tools → Devs → SSH Keys Manager → Add New SSH Key** and paste
-the following public key exactly as shown:
+Each developer must generate their own key pair. **Never commit keys to the repository.**
 
+```bash
+ssh-keygen -t ed25519 -C "sacci-deploy-yourname" -f ~/.ssh/sacci_siteground
 ```
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDarkjztQ9jv6K/eRoctbO2U/YVXIUd8KQIURO7Q3L2K8aDtfn85UWDlU0p15kjx6dQBKSYaEBA1Nwy28MgFffBpDzaqEjcAnOH/q6W1jWNOlx5XyWMgjBRUFA0SkI2lQpX4+B+d3RYZmDDfrtjKiIOoa9cOM21W0XwV+cUrU7YnmKpB8IZcjiJ9V8SnD9AWGwCutaWKFmZo9tSrY00CdQQas4uwZhatDn7VFsJ35KFxc1aaY1n+l7wxz0luOs9uBwnzb1d6+39U366FQqeNuRfa04O54YPuNmKTacVF5znbP57AQmxeC82zNurSt+C9H3q6eL2g0dh6WKQwJlEEhi6fmo5xhZnb7r4SyoLaBRgPvUP15WvOrgki8HlJRO3nUssTKTVPC+n4oY+dC9zhhTPmXwhdOUnhKTT8WpOnnD9CJT9oZ0xbyWRzyVFSnbFL2iklAJ0gFTwRWkvSHU2kJhk8MicRRji++ISF6eiT8JY7bndoXRyqDh/T0C5VaQ0/eZ7C/JiI5QQmvceQvkjcr7OArQfTrdMavdX/u6k/7+FI5ZUsqtlgpOuM8j/7BU7djw2gssVYaZbJzWrr13FWZWmCtJcXI6rP9tMVxB5P7oxdFOIPXJnmQnLXdr8RDMiPaJ4p4oTa7EM59atUIgtEzPOesNuWGwX/D/FxU210bKRXw== sacci-deploy
+
+This creates:
+- `~/.ssh/sacci_siteground` — private key (**keep secret, never commit**)
+- `~/.ssh/sacci_siteground.pub` — public key (upload to SiteGround)
+
+Print the public key to copy it:
+```bash
+cat ~/.ssh/sacci_siteground.pub
 ```
 
-The private key is stored at `/home/user/.ssh/sacci_siteground_rsa` in this
-agent environment and is already configured in `/home/user/.ssh/config`.
+Then go to **Site Tools → Devs → SSH Keys Manager → Add New SSH Key** and paste
+your public key.
+
+Configure your local SSH client (`~/.ssh/config`) to use this key (verify hostname, username, and port match your target environment):
+```
+Host sacci-sg
+    HostName ssh.sacci.space
+    User u2520-3v1nc5i4btry
+    Port 18765
+    IdentityFile ~/.ssh/sacci_siteground
+    IdentitiesOnly yes
+```
 
 ---
 
