@@ -128,14 +128,15 @@ git push siteground main
 
 | File / Dir | Why |
 |---|---|
-| `.env` | DB credentials + secrets — created by installer |
+| `.env` | DB credentials + secrets — created by installer; **store this outside `public_html` (for example `~/sacci_brand_hub.env`) so it is never web-accessible** |
 | `vendor/` | Composer dependencies — install on server separately |
 | `storage/` | User-uploaded files |
 
 After the **first deploy** via git, SSH in and verify these are intact:
 
 ```bash
-ssh sacci-sg "ls -la ~/public_html/sacci_brand_hub/.env ~/public_html/sacci_brand_hub/vendor/"
+# Check that the env file exists outside the web root and that vendor/ is present in the app directory
+ssh sacci-sg "ls -la ~/sacci_brand_hub.env ~/public_html/sacci_brand_hub/vendor/"
 ```
 
 If `vendor/` is missing:
