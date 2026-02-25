@@ -13,7 +13,12 @@ class Router
     private string $basePath = '';
 
     /**
-     * Set the base path to strip from incoming URIs (e.g. '/sacci_brand_hub').
+     * Configure the URI base path that will be removed from incoming request URIs before route matching.
+     *
+     * Provide a path such as '/sacci_brand_hub' to make routes match relative to that prefix; pass an empty
+     * string to disable base-path stripping.
+     *
+     * @param string $path The base path prefix to strip (leading slash recommended, trailing slash will be ignored).
      */
     public function setBasePath(string $path): void
     {
@@ -30,7 +35,16 @@ class Router
     }
 
     /**
-     * Dispatch the request to the appropriate handler.
+     * Routes an incoming HTTP method/URI to a registered handler and returns the handler's result.
+     *
+     * The URI path is parsed and, if a base path is configured, that prefix is removed before route lookup.
+     * If no route matches the resolved path a 404 status and "404 Not Found" are emitted and the method returns null.
+     * When a handler is an array in the form [ControllerClass, 'action'], the controller class is instantiated and the action method is invoked.
+     *
+     * @param string $method HTTP method for the request (e.g., "GET", "POST").
+     * @param string $uri Full request URI or path to dispatch.
+     * @return mixed The value returned by the matched handler, or `null` if no route matched.
+     * @throws Exception If a handler is an array referencing a controller class that does not exist.
      */
     public function dispatch(string $method, string $uri): mixed
     {
