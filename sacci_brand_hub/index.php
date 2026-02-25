@@ -33,7 +33,9 @@ Config\loadEnv(__DIR__ . '/.env');
 
 // Determine the application base path for subfolder installs (e.g. /sacci_brand_hub).
 // SCRIPT_NAME is e.g. /sacci_brand_hub/index.php when installed in a subfolder.
-define('APP_BASE', rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\'));
+$_appBase = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+define('APP_BASE', ($_appBase === '.' || $_appBase === '/') ? '' : $_appBase);
+unset($_appBase);
 
 // Create router and register routes
 $router = new Router();
