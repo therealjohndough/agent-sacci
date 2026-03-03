@@ -1,12 +1,12 @@
 <?php
-// Layout template for Sacci Brand Hub
+// Layout template for Brand Hub
 $currentPath = \Config\requestPath();
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars(Config\env('APP_NAME', 'Sacci Brand Hub')) ?></title>
+    <title><?= htmlspecialchars(Config\env('APP_NAME', 'Brand Hub')) ?></title>
     <meta name="description" content="House of Sacci internal brand hub for content, ticketing, and asset management.">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= htmlspecialchars(\Config\appUrl('/static/brand-hub.css')) ?>">
