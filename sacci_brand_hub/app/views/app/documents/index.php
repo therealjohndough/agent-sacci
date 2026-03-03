@@ -1,4 +1,5 @@
 <h1 class="page-title">Documents</h1>
+<p><a href="<?= htmlspecialchars(\Config\appUrl('/documents/new')) ?>" class="app-link">Create new document</a></p>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The documents module is available in code, but the database tables are not ready yet. Run migrations `009` and `010` to enable it.

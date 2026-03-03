@@ -2,7 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Models\Department;
 use App\Models\Document;
+use Core\Auth;
+use Core\Csrf;
 use PDOException;
 
 class DocumentController extends BaseController
@@ -30,6 +33,62 @@ class DocumentController extends BaseController
         }
     }
 
+    public function create(): void
+    {
+        $this->requireLogin();
+
+        try {
+            $this->render('app/documents/create', [
+                'csrf' => $this->csrfToken(),
+                'departments' => Department::findAllOrdered(),
+                'values' => $this->defaultFormValues(),
+            ]);
+        } catch (PDOException) {
+            $this->render('app/documents/create', [
+                'csrf' => $this->csrfToken(),
+                'departments' => [],
+                'values' => $this->defaultFormValues(),
+                'setupRequired' => true,
+            ]);
+        }
+    }
+
+    public function store(): void
+    {
+        $this->requireLogin();
+
+        $values = $this->submittedFormValues();
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['title'] === '' || $values['content'] === '') {
+            $this->renderCreateForm($values, 'Title and content are required.');
+            return;
+        }
+
+        try {
+            $documentId = Document::create([
+                'title' => $values['title'],
+                'slug' => $this->makeSlug($values['title']),
+                'document_type' => $values['document_type'],
+                'department_id' => $values['department_id'] !== '' ? (int) $values['department_id'] : null,
+                'owner_user_id' => Auth::user()['id'] ?? null,
+                'status' => $values['status'],
+                'source_url' => $values['source_url'] !== '' ? $values['source_url'] : null,
+                'content' => $values['content'],
+                'version_label' => $values['version_label'] !== '' ? $values['version_label'] : null,
+            ]);
+        } catch (PDOException) {
+            $this->renderCreateForm($values, 'The documents tables are not ready yet. Run migrations first.', true);
+            return;
+        }
+
+        $this->redirect('/documents?id=' . $documentId);
+    }
+
     private function show(int $documentId): void
     {
         $document = Document::findWithRelations($documentId);
@@ -42,5 +101,62 @@ class DocumentController extends BaseController
         $this->render('app/documents/show', [
             'document' => $document,
         ]);
+    }
+
+    private function renderCreateForm(array $values, string $error, bool $setupRequired = false): void
+    {
+        try {
+            $departments = Department::findAllOrdered();
+        } catch (PDOException) {
+            $departments = [];
+            $setupRequired = true;
+        }
+
+        $this->render('app/documents/create', [
+            'csrf' => $this->csrfToken(),
+            'departments' => $departments,
+            'values' => $values,
+            'error' => $error,
+            'setupRequired' => $setupRequired,
+        ]);
+    }
+
+    private function defaultFormValues(): array
+    {
+        return [
+            'title' => '',
+            'document_type' => 'reference',
+            'department_id' => '',
+            'status' => 'draft',
+            'source_url' => '',
+            'version_label' => '',
+            'content' => '',
+        ];
+    }
+
+    private function submittedFormValues(): array
+    {
+        return [
+            'title' => trim((string) ($_POST['title'] ?? '')),
+            'document_type' => trim((string) ($_POST['document_type'] ?? 'reference')),
+            'department_id' => trim((string) ($_POST['department_id'] ?? '')),
+            'status' => trim((string) ($_POST['status'] ?? 'draft')),
+            'source_url' => trim((string) ($_POST['source_url'] ?? '')),
+            'version_label' => trim((string) ($_POST['version_label'] ?? '')),
+            'content' => trim((string) ($_POST['content'] ?? '')),
+        ];
+    }
+
+    private function makeSlug(string $title): string
+    {
+        $slug = strtolower($title);
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
+        $slug = trim($slug, '-');
+
+        if ($slug === '') {
+            $slug = 'document';
+        }
+
+        return $slug . '-' . date('YmdHis');
     }
 }

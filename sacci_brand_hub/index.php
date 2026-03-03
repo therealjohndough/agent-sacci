@@ -61,6 +61,8 @@ $router->add('GET',  '/assets',             [App\Controllers\AssetController::cl
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
 $router->add('GET',  '/departments',        [App\Controllers\DepartmentController::class, 'index']);
 $router->add('GET',  '/documents',          [App\Controllers\DocumentController::class, 'index']);
+$router->add('GET',  '/documents/new',      [App\Controllers\DocumentController::class, 'create']);
+$router->add('POST', '/documents',          [App\Controllers\DocumentController::class, 'store']);
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
 $router->add('GET',  '/meetings/new',       [App\Controllers\MeetingController::class, 'create']);
 $router->add('POST', '/meetings',           [App\Controllers\MeetingController::class, 'store']);
