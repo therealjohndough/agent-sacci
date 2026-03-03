@@ -1,5 +1,14 @@
 <h1 class="page-title">Actions</h1>
 <p><a href="<?= htmlspecialchars(\Config\appUrl('/actions/new')) ?>" class="app-link">Create new action item</a></p>
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/actions/sync-airtable')) ?>" class="inline-form">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+    <button type="submit" class="button-link">Sync from Airtable</button>
+</form>
+<?php if (!empty($syncMessage)): ?>
+    <div class="card notice-card">
+        <?= htmlspecialchars($syncMessage) ?>
+    </div>
+<?php endif; ?>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The actions module is available in code, but the database tables are not ready yet. Run migrations `007` and `008` to enable it.

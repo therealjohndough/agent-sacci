@@ -6,6 +6,9 @@ class ActionItem extends BaseModel
 {
     protected static string $table = 'action_items';
 
+    private const ALLOWED_STATUSES = ['open', 'in_progress', 'blocked', 'done', 'archived'];
+    private const ALLOWED_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
+
     public static function countOpen(): int
     {
         $stmt = self::db()->prepare(
@@ -86,5 +89,85 @@ class ActionItem extends BaseModel
         ]);
 
         return $stmt->fetchAll();
+    }
+
+    public static function findByAirtableRecordId(string $recordId): ?array
+    {
+        $stmt = self::db()->prepare(
+            'SELECT *
+             FROM action_items
+             WHERE airtable_record_id = :record_id
+             LIMIT 1'
+        );
+        $stmt->execute(['record_id' => $recordId]);
+        $item = $stmt->fetch();
+
+        return $item ?: null;
+    }
+
+    public static function syncFromAirtableRecord(array $record, ?int $createdByUserId = null): void
+    {
+        $recordId = (string) ($record['id'] ?? '');
+        $fields = $record['fields'] ?? [];
+        if ($recordId === '' || !is_array($fields)) {
+            return;
+        }
+
+        $title = trim((string) ($fields['Title'] ?? ''));
+        if ($title === '') {
+            return;
+        }
+
+        $data = [
+            'title' => $title,
+            'details' => self::nullableString($fields['Details'] ?? null),
+            'status' => self::normalizeStatus($fields['Status'] ?? null),
+            'priority' => self::normalizePriority($fields['Priority'] ?? null),
+            'due_date' => self::normalizeDate($fields['Due Date'] ?? null),
+            'airtable_record_id' => $recordId,
+        ];
+
+        $existing = self::findByAirtableRecordId($recordId);
+        if ($existing) {
+            self::update((int) $existing['id'], $data);
+            return;
+        }
+
+        $data['created_by_user_id'] = $createdByUserId;
+        $data['owner_user_id'] = $createdByUserId;
+        $data['source_type'] = 'manual';
+        self::create($data);
+    }
+
+    private static function nullableString(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
+    private static function normalizeStatus(mixed $value): string
+    {
+        $value = strtolower(trim((string) $value));
+        $value = str_replace([' ', '-'], '_', $value);
+
+        return in_array($value, self::ALLOWED_STATUSES, true) ? $value : 'open';
+    }
+
+    private static function normalizePriority(mixed $value): string
+    {
+        $value = strtolower(trim((string) $value));
+
+        return in_array($value, self::ALLOWED_PRIORITIES, true) ? $value : 'medium';
+    }
+
+    private static function normalizeDate(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return substr($value, 0, 10);
     }
 }

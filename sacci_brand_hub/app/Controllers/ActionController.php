@@ -5,8 +5,10 @@ namespace App\Controllers;
 use App\Models\ActionItem;
 use App\Models\Department;
 use App\Models\Meeting;
+use Core\AirtableClient;
 use Core\Auth;
 use Core\Csrf;
+use RuntimeException;
 use PDOException;
 
 class ActionController extends BaseController
@@ -19,12 +21,14 @@ class ActionController extends BaseController
             $this->render('app/actions/index', [
                 'actionItems' => ActionItem::findAllWithRelations(),
                 'csrf' => $this->csrfToken(),
+                'syncMessage' => $this->syncMessage(),
             ]);
         } catch (PDOException) {
             $this->render('app/actions/index', [
                 'actionItems' => [],
                 'setupRequired' => true,
                 'csrf' => $this->csrfToken(),
+                'syncMessage' => $this->syncMessage(),
             ]);
         }
     }
@@ -174,6 +178,34 @@ class ActionController extends BaseController
         $this->redirect('/actions');
     }
 
+    public function syncFromAirtable(): void
+    {
+        $this->requireLogin();
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        try {
+            $client = new AirtableClient();
+            $tableName = trim((string) \Config\env('AIRTABLE_ACTIONS_TABLE', ''));
+            $viewName = trim((string) \Config\env('AIRTABLE_ACTIONS_VIEW', ''));
+            $records = $client->fetchRecords($tableName, $viewName === '' ? null : $viewName);
+            $userId = Auth::user()['id'] ?? null;
+
+            $count = 0;
+            foreach ($records as $record) {
+                ActionItem::syncFromAirtableRecord($record, $userId !== null ? (int) $userId : null);
+                $count++;
+            }
+
+            $this->redirect('/actions?sync=' . urlencode('Imported ' . $count . ' Airtable record(s).'));
+        } catch (RuntimeException|PDOException $e) {
+            $this->redirect('/actions?sync=' . urlencode($e->getMessage()));
+        }
+    }
+
     private function renderActionForm(array $values, ?string $error = null, bool $setupRequired = false, bool $isEdit = false): void
     {
         try {
@@ -220,5 +252,12 @@ class ActionController extends BaseController
             'meeting_id' => trim((string) ($_POST['meeting_id'] ?? '')),
             'due_date' => trim((string) ($_POST['due_date'] ?? '')),
         ];
+    }
+
+    private function syncMessage(): ?string
+    {
+        $message = trim((string) ($_GET['sync'] ?? ''));
+
+        return $message === '' ? null : $message;
     }
 }

@@ -57,6 +57,7 @@ $router->add('GET',  '/actions/new',        [App\Controllers\ActionController::c
 $router->add('GET',  '/actions/edit',       [App\Controllers\ActionController::class, 'edit']);
 $router->add('POST', '/actions',            [App\Controllers\ActionController::class, 'store']);
 $router->add('POST', '/actions/archive',    [App\Controllers\ActionController::class, 'archive']);
+$router->add('POST', '/actions/sync-airtable', [App\Controllers\ActionController::class, 'syncFromAirtable']);
 $router->add('POST', '/actions/update',     [App\Controllers\ActionController::class, 'update']);
 $router->add('GET',  '/tickets',            [App\Controllers\TicketController::class, 'index']);
 
