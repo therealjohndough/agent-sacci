@@ -1,4 +1,5 @@
 <h1 class="page-title">Reports</h1>
+<p><a href="<?= htmlspecialchars(\Config\appUrl('/reports/new')) ?>" class="app-link">Create new report</a></p>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The reports module is available in code, but the database tables are not ready yet. Run migrations `011` and `012` to enable it.
