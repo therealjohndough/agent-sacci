@@ -123,3 +123,12 @@ body {
     color: var(--color-muted);
     font-size: 14px;
 }
+
+.simple-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+}
+
+.simple-list li {
+    margin-bottom: 4px;
+}

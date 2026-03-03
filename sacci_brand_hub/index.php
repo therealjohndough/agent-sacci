@@ -57,8 +57,10 @@ $router->add('GET',  '/assets',             [App\Controllers\AssetController::cl
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
 
 $router->add('GET',  '/actions',            [App\Controllers\ActionController::class, 'index']);
+$router->add('GET',  '/departments',        [App\Controllers\DepartmentController::class, 'index']);
 $router->add('GET',  '/documents',          [App\Controllers\DocumentController::class, 'index']);
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
+$router->add('GET',  '/people',             [App\Controllers\PeopleController::class, 'index']);
 $router->add('GET',  '/reports',            [App\Controllers\ReportController::class, 'index']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);

@@ -15,6 +15,8 @@ $currentPath = \Config\requestPath();
     <div class="navbar">
         <div>
             <a href="<?= htmlspecialchars(\Config\appUrl('/app')) ?>" class="<?= (str_starts_with($currentPath, '/app') ? 'active' : '') ?>">Dashboard</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/people')) ?>" class="<?= (str_starts_with($currentPath, '/people') ? 'active' : '') ?>">People</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/departments')) ?>" class="<?= (str_starts_with($currentPath, '/departments') ? 'active' : '') ?>">Departments</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/meetings')) ?>" class="<?= (str_starts_with($currentPath, '/meetings') ? 'active' : '') ?>">Meetings</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/actions')) ?>" class="<?= (str_starts_with($currentPath, '/actions') ? 'active' : '') ?>">Actions</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/reports')) ?>" class="<?= (str_starts_with($currentPath, '/reports') ? 'active' : '') ?>">Reports</a>
