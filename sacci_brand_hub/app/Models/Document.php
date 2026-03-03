@@ -37,6 +37,20 @@ class Document extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function findRecentActive(int $limit = 5): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->query(
+            'SELECT id, title
+             FROM documents
+             WHERE status = "active"
+             ORDER BY updated_at DESC
+             LIMIT ' . $limit
+        );
+
+        return $stmt->fetchAll();
+    }
+
     public static function findWithRelations(int $id): ?array
     {
         $stmt = self::db()->prepare(

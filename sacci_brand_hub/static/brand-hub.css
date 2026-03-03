@@ -159,3 +159,17 @@ body {
     font-weight: 700;
     line-height: 1;
 }
+
+.section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.section-card {
+    margin-bottom: 0;
+}
+
+.compact-title {
+    margin-top: 0;
+}

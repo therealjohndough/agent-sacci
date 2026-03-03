@@ -50,6 +50,7 @@ $router->add('POST', '/login',              [App\Controllers\AuthController::cla
 $router->add('GET',  '/logout',             [App\Controllers\AuthController::class, 'logout']);
 
 $router->add('GET',  '/app',                [App\Controllers\DashboardController::class, 'index']);
+$router->add('GET',  '/dashboard/executive',[App\Controllers\ExecutiveDashboardController::class, 'index']);
 
 $router->add('GET',  '/tickets',            [App\Controllers\TicketController::class, 'index']);
 

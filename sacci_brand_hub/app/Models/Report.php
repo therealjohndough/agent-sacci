@@ -37,6 +37,20 @@ class Report extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function findRecentPublished(int $limit = 5): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->query(
+            'SELECT id, title
+             FROM reports
+             WHERE status = "published"
+             ORDER BY COALESCE(reporting_period_end, reporting_period_start, DATE(updated_at)) DESC
+             LIMIT ' . $limit
+        );
+
+        return $stmt->fetchAll();
+    }
+
     public static function findWithRelations(int $id): ?array
     {
         $stmt = self::db()->prepare(

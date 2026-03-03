@@ -41,6 +41,20 @@ class ActionItem extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function findRecentOpen(int $limit = 6): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->query(
+            'SELECT id, title, due_date
+             FROM action_items
+             WHERE status IN ("open", "in_progress", "blocked")
+             ORDER BY due_date IS NULL, due_date ASC, created_at DESC
+             LIMIT ' . $limit
+        );
+
+        return $stmt->fetchAll();
+    }
+
     public static function findBySource(string $sourceType, int $sourceId): array
     {
         $stmt = self::db()->prepare(

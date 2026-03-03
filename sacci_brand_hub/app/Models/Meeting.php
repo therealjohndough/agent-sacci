@@ -23,6 +23,19 @@ class Meeting extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function findRecent(int $limit = 5): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->query(
+            'SELECT id, title
+             FROM meetings
+             ORDER BY COALESCE(occurred_at, scheduled_for, created_at) DESC
+             LIMIT ' . $limit
+        );
+
+        return $stmt->fetchAll();
+    }
+
     public static function findWithDepartment(int $id): ?array
     {
         $stmt = self::db()->prepare(
