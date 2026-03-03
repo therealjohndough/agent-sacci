@@ -94,4 +94,16 @@ class Report extends BaseModel
 
         return $stmt->fetchAll();
     }
+
+    public static function createEntry(array $data): int
+    {
+        $columns = array_keys($data);
+        $placeholders = array_map(fn($column) => ':' . $column, $columns);
+        $sql = 'INSERT INTO report_entries (' . implode(', ', $columns) . ')
+                VALUES (' . implode(', ', $placeholders) . ')';
+        $stmt = self::db()->prepare($sql);
+        $stmt->execute($data);
+
+        return (int) self::db()->lastInsertId();
+    }
 }

@@ -150,6 +150,48 @@ class ReportController extends BaseController
         $this->redirect('/reports?id=' . $reportId);
     }
 
+    public function storeEntry(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_POST['report_id'] ?? 0);
+        $report = Report::findWithRelations($reportId);
+        if (!$report) {
+            http_response_code(404);
+            echo 'Report not found';
+            return;
+        }
+
+        $values = $this->submittedEntryValues();
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['metric_key'] === '' || $values['metric_label'] === '') {
+            $this->renderReportShow($report, 'Metric key and label are required.', $values);
+            return;
+        }
+
+        try {
+            Report::createEntry([
+                'report_id' => $reportId,
+                'metric_key' => $values['metric_key'],
+                'metric_label' => $values['metric_label'],
+                'metric_value' => $values['metric_value'] !== '' ? $values['metric_value'] : null,
+                'metric_unit' => $values['metric_unit'] !== '' ? $values['metric_unit'] : null,
+                'notes' => $values['notes'] !== '' ? $values['notes'] : null,
+                'sort_order' => $values['sort_order'] !== '' ? (int) $values['sort_order'] : 0,
+            ]);
+        } catch (PDOException) {
+            $this->renderReportShow($report, 'Unable to add report entry right now.', $values);
+            return;
+        }
+
+        $this->redirect('/reports?id=' . $reportId);
+    }
+
     private function show(int $reportId): void
     {
         $report = Report::findWithRelations($reportId);
@@ -159,9 +201,17 @@ class ReportController extends BaseController
             return;
         }
 
+        $this->renderReportShow($report);
+    }
+
+    private function renderReportShow(array $report, ?string $entryError = null, ?array $entryValues = null): void
+    {
         $this->render('app/reports/show', [
             'report' => $report,
-            'entries' => Report::findEntries($reportId),
+            'entries' => Report::findEntries((int) $report['id']),
+            'entryError' => $entryError,
+            'entryValues' => $entryValues ?? $this->defaultEntryValues((int) $report['id']),
+            'csrf' => $this->csrfToken(),
         ]);
     }
 
@@ -198,6 +248,19 @@ class ReportController extends BaseController
         ];
     }
 
+    private function defaultEntryValues(int $reportId): array
+    {
+        return [
+            'report_id' => (string) $reportId,
+            'metric_key' => '',
+            'metric_label' => '',
+            'metric_value' => '',
+            'metric_unit' => '',
+            'notes' => '',
+            'sort_order' => '',
+        ];
+    }
+
     private function submittedFormValues(): array
     {
         return [
@@ -209,6 +272,19 @@ class ReportController extends BaseController
             'status' => trim((string) ($_POST['status'] ?? 'draft')),
             'source_url' => trim((string) ($_POST['source_url'] ?? '')),
             'summary' => trim((string) ($_POST['summary'] ?? '')),
+        ];
+    }
+
+    private function submittedEntryValues(): array
+    {
+        return [
+            'report_id' => trim((string) ($_POST['report_id'] ?? '')),
+            'metric_key' => trim((string) ($_POST['metric_key'] ?? '')),
+            'metric_label' => trim((string) ($_POST['metric_label'] ?? '')),
+            'metric_value' => trim((string) ($_POST['metric_value'] ?? '')),
+            'metric_unit' => trim((string) ($_POST['metric_unit'] ?? '')),
+            'notes' => trim((string) ($_POST['notes'] ?? '')),
+            'sort_order' => trim((string) ($_POST['sort_order'] ?? '')),
         ];
     }
 

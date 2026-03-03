@@ -50,3 +50,35 @@
         </div>
     <?php endforeach; ?>
 <?php endif; ?>
+
+<h2 class="section-title">Add Entry</h2>
+<?php if (!empty($entryError)): ?>
+    <div class="card error-card">
+        <?= htmlspecialchars($entryError) ?>
+    </div>
+<?php endif; ?>
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/reports/entries')) ?>">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+    <input type="hidden" name="report_id" value="<?= htmlspecialchars($entryValues['report_id'] ?? (string) $report['id']) ?>">
+    <div class="card">
+        <label for="metric_key" class="form-label">Metric Key</label>
+        <input type="text" id="metric_key" name="metric_key" required class="form-input" value="<?= htmlspecialchars($entryValues['metric_key'] ?? '') ?>">
+
+        <label for="metric_label" class="form-label">Metric Label</label>
+        <input type="text" id="metric_label" name="metric_label" required class="form-input" value="<?= htmlspecialchars($entryValues['metric_label'] ?? '') ?>">
+
+        <label for="metric_value" class="form-label">Metric Value</label>
+        <input type="text" id="metric_value" name="metric_value" class="form-input" value="<?= htmlspecialchars($entryValues['metric_value'] ?? '') ?>">
+
+        <label for="metric_unit" class="form-label">Metric Unit</label>
+        <input type="text" id="metric_unit" name="metric_unit" class="form-input" value="<?= htmlspecialchars($entryValues['metric_unit'] ?? '') ?>">
+
+        <label for="sort_order" class="form-label">Sort Order</label>
+        <input type="number" id="sort_order" name="sort_order" class="form-input" value="<?= htmlspecialchars($entryValues['sort_order'] ?? '') ?>">
+
+        <label for="entry_notes" class="form-label">Notes</label>
+        <textarea id="entry_notes" name="notes" class="form-input form-textarea"><?= htmlspecialchars($entryValues['notes'] ?? '') ?></textarea>
+
+        <button type="submit" class="button-primary">Add Entry</button>
+    </div>
+</form>
