@@ -88,6 +88,12 @@ $router->add('POST', '/reports/entries/delete',[App\Controllers\ReportController
 $router->add('POST', '/reports/entries/update',[App\Controllers\ReportController::class, 'updateEntry']);
 $router->add('POST', '/reports/update',     [App\Controllers\ReportController::class, 'update']);
 $router->add('GET',  '/search',             [App\Controllers\SearchController::class, 'index']);
+$router->add('GET',  '/strains',            [App\Controllers\StrainController::class, 'index']);
+$router->add('GET',  '/strains/new',        [App\Controllers\StrainController::class, 'create']);
+$router->add('GET',  '/strains/edit',       [App\Controllers\StrainController::class, 'edit']);
+$router->add('POST', '/strains',            [App\Controllers\StrainController::class, 'store']);
+$router->add('POST', '/strains/archive',    [App\Controllers\StrainController::class, 'archive']);
+$router->add('POST', '/strains/update',     [App\Controllers\StrainController::class, 'update']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 

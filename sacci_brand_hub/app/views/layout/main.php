@@ -17,6 +17,7 @@ $currentPath = \Config\requestPath();
             <a href="<?= htmlspecialchars(\Config\appUrl('/app')) ?>" class="<?= (str_starts_with($currentPath, '/app') ? 'active' : '') ?>">Dashboard</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/dashboard/executive')) ?>" class="<?= (str_starts_with($currentPath, '/dashboard/executive') ? 'active' : '') ?>">Executive</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/search')) ?>" class="<?= (str_starts_with($currentPath, '/search') ? 'active' : '') ?>">Search</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/strains')) ?>" class="<?= (str_starts_with($currentPath, '/strains') ? 'active' : '') ?>">Strains</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/people')) ?>" class="<?= (str_starts_with($currentPath, '/people') ? 'active' : '') ?>">People</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/departments')) ?>" class="<?= (str_starts_with($currentPath, '/departments') ? 'active' : '') ?>">Departments</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/meetings')) ?>" class="<?= (str_starts_with($currentPath, '/meetings') ? 'active' : '') ?>">Meetings</a>
