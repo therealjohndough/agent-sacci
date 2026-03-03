@@ -1,0 +1,78 @@
+name: Deploy
+
+# Manual trigger only — never deploy automatically
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  preflight:
+    name: Pre-deploy checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: pdo_mysql, mbstring, fileinfo
+          coverage: none
+
+      - name: Install dependencies
+        working-directory: sacci_brand_hub
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: PHP lint
+        run: |
+          find sacci_brand_hub -name "*.php" \
+            -not -path "*/vendor/*" \
+            -not -path "*/install/*" \
+            | xargs -I{} php -l {}
+          echo "✅ Syntax check passed"
+
+      - name: Block deploy if /install/ present
+        run: |
+          if [ -d "sacci_brand_hub/install" ]; then
+            echo "❌ DEPLOY BLOCKED: install/ directory must be removed before deploying to ${{ inputs.environment }}"
+            exit 1
+          fi
+          echo "✅ install/ not present — safe to deploy"
+
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        run: |
+          # TODO: Replace with your actual deploy method
+          # Options:
+          #   rsync:  rsync -avz --delete sacci_brand_hub/ user@host:/var/www/current/
+          #   SSH:    ssh user@host 'cd /var/www && git pull && composer install --no-dev'
+          #   FTP:    use lftp or similar
+          #   Service: trigger Forge, Envoyer, Deployer, etc.
+          echo "⚠️  Deploy step not configured — add your deploy commands above"
+          exit 1
+
+      - name: Post-deploy verification
+        run: |
+          # TODO: Add verification steps after deploy
+          # Examples:
+          #   curl -f https://sacci.site/health || exit 1
+          #   ssh user@host '[ ! -d /var/www/current/install ] || exit 1'
+          echo "TODO: Add post-deploy health checks"

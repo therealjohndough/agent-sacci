@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="sacci_brand_hub/tests/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+
+    <testsuites>
+        <testsuite name="Sacci Brand Hub">
+            <directory>sacci_brand_hub/tests/</directory>
+        </testsuite>
+    </testsuites>
+
+    <source>
+        <include>
+            <directory suffix=".php">sacci_brand_hub/app</directory>
+            <directory suffix=".php">sacci_brand_hub/core</directory>
+        </include>
+    </source>
+
+</phpunit>

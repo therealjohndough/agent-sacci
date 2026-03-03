@@ -177,3 +177,135 @@ git push siteground <commit-sha>:refs/heads/main --force
 | White page after deploy | SSH in and check `.env` exists; check SiteGround error logs |
 | `vendor/` missing | `ssh sacci-sg "cd ~/public_html/sacci_brand_hub && composer install --no-dev"` |
 | `git push` hangs | SiteGround firewall may block outbound SSH; try from a different network |
+
+---
+
+## Release Deploy Pattern (Rollback-Safe)
+
+This strategy keeps the last 3 releases on the server under timestamped folders and uses a symlink as the live document root pointer. It allows instant rollback without re-uploading files.
+
+### Directory layout on the server
+
+```text
+/var/www/
+├── releases/
+│   ├── 20240101_120000/   ← oldest kept release
+│   ├── 20240215_083000/   ← previous release
+│   └── 20240301_094500/   ← current release (newest)
+└── current -> /var/www/releases/20240301_094500/   ← symlink
+```
+
+- `/var/www/releases/YYYYMMDD_HHMMSS/` — each deploy gets its own timestamped folder
+- `/var/www/current` — symlink always points to the active release
+- **Web server document root must point to `/var/www/current/`** (set once in Apache/Nginx config; never changes)
+
+### Deploy steps
+
+1. Build a timestamped release name locally: `RELEASE=$(date +%Y%m%d_%H%M%S)`
+2. Upload the new release to the server: `rsync -az ./sacci_brand_hub/ sacci-sg:/var/www/releases/$RELEASE/`
+3. SSH in and run `composer install --no-dev --optimize-autoloader` inside the new release folder
+4. Re-point the symlink atomically:
+
+   ```bash
+   ssh sacci-sg "ln -sfn /var/www/releases/$RELEASE /var/www/current"
+   ```
+
+5. Verify the site responds correctly: `curl -sI https://sacci.space/`
+6. Prune old releases — keep only the 2 previous releases plus the new current:
+
+   ```bash
+   ssh sacci-sg "ls -1dt /var/www/releases/*/ | tail -n +4 | xargs rm -rf"
+   ```
+
+### Notes
+
+- The `.env` file and `storage/` directory should live **outside** the releases tree and be symlinked or bind-mounted into each release so they persist across deploys
+- Database migrations must be run **before** the symlink is re-pointed if they are backwards-incompatible
+
+---
+
+## Pre-Deploy Checklist
+
+Before pushing any release to production, confirm every item below:
+
+- [ ] All tests pass locally (`./vendor/bin/phpunit`)
+- [ ] PHP lint passes (`php -l` on all changed files, or `find sacci_brand_hub -name '*.php' -exec php -l {} \;`)
+- [ ] `/install/` directory has been deleted from the release (or never existed)
+- [ ] `.env` is configured on the server with correct production values
+- [ ] `composer install --no-dev --optimize-autoloader` has been run inside the release folder
+- [ ] Database migrations have been run and verified against production DB
+- [ ] `storage/` is writable by the web server user
+- [ ] Symlink re-point tested on staging before production (if staging exists)
+- [ ] Rollback plan confirmed (previous release folder still present on server)
+
+---
+
+## Rollback Procedure
+
+Use these steps to instantly revert to the previous release without re-uploading files.
+
+### Step 1 — Identify the previous release
+
+```bash
+# List releases ordered newest-first
+ssh sacci-sg "ls -1dt /var/www/releases/*/"
+# Example output:
+#   /var/www/releases/20240301_094500/   ← current (bad)
+#   /var/www/releases/20240215_083000/   ← previous (roll back to this)
+#   /var/www/releases/20240101_120000/   ← oldest kept
+```
+
+### Step 2 — Re-point the symlink to the previous release
+
+```bash
+# Replace <PREVIOUS_RELEASE> with the folder name identified above
+ssh sacci-sg "ln -sfn /var/www/releases/<PREVIOUS_RELEASE> /var/www/current"
+```
+
+### Step 3 — Verify the rollback
+
+```bash
+curl -sI https://<YOUR_DOMAIN>/
+# Expected: HTTP/2 302  Location: .../login   (or your expected response)
+```
+
+### Step 4 — Confirm which release is live
+
+```bash
+ssh sacci-sg "readlink /var/www/current"
+# Should print the path to the previous release folder
+```
+
+### Step 5 — Investigate the failed release
+
+```bash
+# Check error logs for the failed release
+ssh sacci-sg "tail -n 100 ~/logs/error_log"
+# Or check PHP error log path configured in .env / php.ini
+```
+
+### Step 6 — Do not delete the bad release immediately
+
+Keep the failed release folder until you have identified and fixed the root cause. This lets you diff files and review logs without losing context.
+
+### Rollback for database migrations
+
+If the broken release included a database migration, a code rollback alone may not be sufficient:
+
+1. Restore the database from the most recent backup taken before the migration ran
+2. Re-point the symlink (Step 2 above)
+3. Verify data integrity before reopening traffic
+
+---
+
+## Emergency Contacts
+
+| Role | Contact |
+|---|---|
+| Hosting panel URL | [FILL IN] — SiteGround Site Tools URL |
+| DB admin access | [FILL IN] — phpMyAdmin URL or SSH path to run MySQL client |
+| Primary developer contact | [FILL IN] — Name, email, phone/Signal |
+| Secondary developer / escalation | [FILL IN] — Name, email, phone/Signal |
+| Hosting support | SiteGround support chat: [https://www.siteground.com/support](https://www.siteground.com/support) |
+| Domain registrar | [FILL IN] — Registrar name + login URL |
+| Escalation path | [FILL IN] — e.g., Dev → Lead Dev → CTO → Hosting Support |

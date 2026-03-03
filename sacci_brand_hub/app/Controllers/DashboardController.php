@@ -18,11 +18,19 @@ class DashboardController extends BaseController
         $user = Auth::user();
         $tickets = Ticket::findByAssignee($user['id']);
         $metrics = $this->loadSummaryMetrics();
+
+        // Surface the storage exposure warning to admin users only.
+        $storageWarning = false;
+        if (!empty($_SERVER['_STORAGE_EXPOSED']) && Auth::hasPermission('user.manage')) {
+            $storageWarning = true;
+        }
+
         $this->render('app/dashboard', [
-            'user' => $user,
-            'tickets' => $tickets,
-            'metrics' => $metrics,
-            'csrf' => $this->csrfToken(),
+            'user'           => $user,
+            'tickets'        => $tickets,
+            'metrics'        => $metrics,
+            'csrf'           => $this->csrfToken(),
+            'storageWarning' => $storageWarning,
         ]);
     }
 

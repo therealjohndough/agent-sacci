@@ -8,6 +8,30 @@ session_start();
 // Manually require the config file that defines Config\loadEnv()
 require_once __DIR__ . '/config/config.php';
 
+// ---------------------------------------------------------------------------
+// /install/ route gating — block access on non-local environments.
+// This check runs before the autoloader and full env load so it is always
+// enforced regardless of whether the application has been configured yet.
+// ---------------------------------------------------------------------------
+(function (): void {
+    $rawUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    // Strip subfolder prefix so the check works in both root and subfolder deploys.
+    $scriptBase = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+    if ($scriptBase !== '' && str_starts_with($rawUri, $scriptBase)) {
+        $rawUri = substr($rawUri, strlen($scriptBase)) ?: '/';
+    }
+    if (str_starts_with($rawUri, '/install/') || $rawUri === '/install') {
+        // APP_ENV may not yet be loaded from .env — check native env first.
+        $env = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? '');
+        $allowed = in_array($env, ['local', 'development'], true);
+        if (!$allowed) {
+            http_response_code(403);
+            echo '403 Forbidden — The installer is disabled in this environment.';
+            exit;
+        }
+    }
+})();
+
 // Autoloader for PSR-4 style classes
 spl_autoload_register(function ($class) {
     $prefixes = [
@@ -40,6 +64,32 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; form-action 'self'; base-uri 'self'; frame-ancestors 'self'");
+
+// ---------------------------------------------------------------------------
+// storage/ web-accessibility check.
+// Attempts to detect whether the storage directory is reachable via the web
+// root. Logs a critical warning if so, and marks a flag in the session so the
+// dashboard can surface a visible alert for admin users.
+// ---------------------------------------------------------------------------
+(function (): void {
+    $storagePath = realpath(__DIR__ . '/storage') ?: '';
+    $docRoot     = realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '';
+
+    if ($storagePath === '' || $docRoot === '') {
+        return;
+    }
+
+    // storage/ is web-accessible when it lives inside DOCUMENT_ROOT.
+    if (str_starts_with($storagePath, $docRoot)) {
+        error_log(
+            'CRITICAL SECURITY WARNING: sacci_brand_hub/storage/ is inside the web '
+            . 'document root (' . $docRoot . ') and may be directly accessible via HTTP. '
+            . 'Move storage/ above the document root or add an .htaccess that denies all access.'
+        );
+        // Persist the flag for the current request so controllers can read it.
+        $_SERVER['_STORAGE_EXPOSED'] = true;
+    }
+})();
 
 // Create router and register routes
 $router = new Core\Router();
@@ -104,6 +154,8 @@ $router->add('POST', '/strains/update',     [App\Controllers\StrainController::c
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 
 $router->add('GET',  '/content',            [App\Controllers\ContentController::class, 'index']);
+
+$router->add('GET',  '/admin/test-mail',    [App\Controllers\AdminController::class, 'testMail']);
 
 // Dispatch based on current request
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';

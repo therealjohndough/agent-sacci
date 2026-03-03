@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: PHP 8.2 — Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: pdo_mysql, mbstring, fileinfo
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: sacci_brand_hub/vendor
+          key: composer-${{ hashFiles('sacci_brand_hub/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        working-directory: sacci_brand_hub
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: PHP lint (syntax check)
+        run: |
+          echo "Running PHP syntax check..."
+          find sacci_brand_hub -name "*.php" \
+            -not -path "*/vendor/*" \
+            -not -path "*/install/*" \
+            | xargs -I{} php -l {}
+          echo "✅ Syntax check passed"
+
+      - name: Run tests
+        working-directory: sacci_brand_hub
+        run: |
+          if [ -d "tests" ]; then
+            echo "Running PHPUnit tests..."
+            ./vendor/bin/phpunit --configuration ../phpunit.xml.dist
+          else
+            echo "⚠️  No tests/ directory found — skipping tests"
+          fi
+
+      - name: Verify /install/ is not exposed
+        run: |
+          if [ -d "sacci_brand_hub/install" ]; then
+            echo "⚠️  WARNING: install/ directory still present — must be removed before production deploy"
+          else
+            echo "✅ install/ directory not present"
+          fi
