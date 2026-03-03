@@ -79,6 +79,7 @@ $router->add('GET',  '/reports/edit',       [App\Controllers\ReportController::c
 $router->add('POST', '/reports',            [App\Controllers\ReportController::class, 'store']);
 $router->add('GET',  '/reports/entries/edit',[App\Controllers\ReportController::class, 'editEntry']);
 $router->add('POST', '/reports/entries',    [App\Controllers\ReportController::class, 'storeEntry']);
+$router->add('POST', '/reports/entries/delete',[App\Controllers\ReportController::class, 'deleteEntry']);
 $router->add('POST', '/reports/entries/update',[App\Controllers\ReportController::class, 'updateEntry']);
 $router->add('POST', '/reports/update',     [App\Controllers\ReportController::class, 'update']);
 $router->add('GET',  '/search',             [App\Controllers\SearchController::class, 'index']);

@@ -178,3 +178,16 @@ body {
     min-height: 120px;
     resize: vertical;
 }
+
+.inline-form {
+    margin: 0 0 8px;
+}
+
+.button-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-danger);
+    cursor: pointer;
+    font: inherit;
+}

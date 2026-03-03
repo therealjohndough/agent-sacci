@@ -135,4 +135,13 @@ class Report extends BaseModel
         $stmt = self::db()->prepare($sql);
         $stmt->execute($data);
     }
+
+    public static function deleteEntry(int $entryId): void
+    {
+        $stmt = self::db()->prepare(
+            'DELETE FROM report_entries
+             WHERE id = :id'
+        );
+        $stmt->execute(['id' => $entryId]);
+    }
 }

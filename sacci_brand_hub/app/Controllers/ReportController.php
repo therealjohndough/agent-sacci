@@ -269,6 +269,36 @@ class ReportController extends BaseController
         $this->redirect('/reports?id=' . $reportId);
     }
 
+    public function deleteEntry(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_POST['report_id'] ?? 0);
+        $entryId = (int) ($_POST['id'] ?? 0);
+        $report = Report::findWithRelations($reportId);
+        $entry = Report::findEntry($entryId);
+
+        if (!$report || !$entry || (int) $entry['report_id'] !== $reportId) {
+            http_response_code(404);
+            echo 'Report entry not found';
+            return;
+        }
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        try {
+            Report::deleteEntry($entryId);
+        } catch (PDOException) {
+            $this->renderReportShow($report, 'Unable to delete report entry right now.');
+            return;
+        }
+
+        $this->redirect('/reports?id=' . $reportId);
+    }
+
     private function show(int $reportId): void
     {
         $report = Report::findWithRelations($reportId);

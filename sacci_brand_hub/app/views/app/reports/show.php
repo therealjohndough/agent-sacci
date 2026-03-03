@@ -40,6 +40,12 @@
             <p>
                 <a href="<?= htmlspecialchars(\Config\appUrl('/reports/entries/edit')) ?>?report_id=<?= urlencode((string) $report['id']) ?>&entry_id=<?= urlencode((string) $entry['id']) ?>" class="app-link">Edit entry</a>
             </p>
+            <form method="post" action="<?= htmlspecialchars(\Config\appUrl('/reports/entries/delete')) ?>" class="inline-form">
+                <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+                <input type="hidden" name="report_id" value="<?= htmlspecialchars((string) $report['id']) ?>">
+                <input type="hidden" name="id" value="<?= htmlspecialchars((string) $entry['id']) ?>">
+                <button type="submit" class="button-link">Delete entry</button>
+            </form>
             <p>
                 <strong>Value:</strong>
                 <?= htmlspecialchars($entry['metric_value'] ?? 'N/A') ?>
