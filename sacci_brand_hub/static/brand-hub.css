@@ -173,3 +173,8 @@ body {
 .compact-title {
     margin-top: 0;
 }
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}

@@ -1,4 +1,5 @@
 <h1 class="page-title">Meetings</h1>
+<p><a href="<?= htmlspecialchars(\Config\appUrl('/meetings/new')) ?>" class="app-link">Create new meeting</a></p>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The meetings module is available in code, but the database tables are not ready yet. Run migrations `003`, `004`, and `005` to enable it.

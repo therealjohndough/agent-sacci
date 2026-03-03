@@ -61,6 +61,8 @@ $router->add('GET',  '/actions',            [App\Controllers\ActionController::c
 $router->add('GET',  '/departments',        [App\Controllers\DepartmentController::class, 'index']);
 $router->add('GET',  '/documents',          [App\Controllers\DocumentController::class, 'index']);
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
+$router->add('GET',  '/meetings/new',       [App\Controllers\MeetingController::class, 'create']);
+$router->add('POST', '/meetings',           [App\Controllers\MeetingController::class, 'store']);
 $router->add('GET',  '/people',             [App\Controllers\PeopleController::class, 'index']);
 $router->add('GET',  '/reports',            [App\Controllers\ReportController::class, 'index']);
 $router->add('GET',  '/search',             [App\Controllers\SearchController::class, 'index']);
