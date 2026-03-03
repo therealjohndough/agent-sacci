@@ -32,6 +32,9 @@ spl_autoload_register(function ($class) {
 // Load environment variables
 Config\loadEnv(__DIR__ . '/.env');
 
+// Define base path for subfolder installs (used by BaseController::redirect())
+define('APP_BASE', rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\'));
+
 // Create router and register routes
 $router = new Core\Router();
 
