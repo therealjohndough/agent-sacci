@@ -52,12 +52,13 @@ $router->add('GET',  '/logout',             [App\Controllers\AuthController::cla
 $router->add('GET',  '/app',                [App\Controllers\DashboardController::class, 'index']);
 $router->add('GET',  '/dashboard/executive',[App\Controllers\ExecutiveDashboardController::class, 'index']);
 
+$router->add('GET',  '/actions',            [App\Controllers\ActionController::class, 'index']);
+$router->add('GET',  '/actions/new',        [App\Controllers\ActionController::class, 'create']);
+$router->add('POST', '/actions',            [App\Controllers\ActionController::class, 'store']);
 $router->add('GET',  '/tickets',            [App\Controllers\TicketController::class, 'index']);
 
 $router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
-
-$router->add('GET',  '/actions',            [App\Controllers\ActionController::class, 'index']);
 $router->add('GET',  '/departments',        [App\Controllers\DepartmentController::class, 'index']);
 $router->add('GET',  '/documents',          [App\Controllers\DocumentController::class, 'index']);
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);

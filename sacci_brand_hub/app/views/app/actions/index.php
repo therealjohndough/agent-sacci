@@ -1,4 +1,5 @@
 <h1 class="page-title">Actions</h1>
+<p><a href="<?= htmlspecialchars(\Config\appUrl('/actions/new')) ?>" class="app-link">Create new action item</a></p>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The actions module is available in code, but the database tables are not ready yet. Run migrations `007` and `008` to enable it.
