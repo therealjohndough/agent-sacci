@@ -63,6 +63,7 @@ $router->add('GET',  '/documents',          [App\Controllers\DocumentController:
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
 $router->add('GET',  '/people',             [App\Controllers\PeopleController::class, 'index']);
 $router->add('GET',  '/reports',            [App\Controllers\ReportController::class, 'index']);
+$router->add('GET',  '/search',             [App\Controllers\SearchController::class, 'index']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 

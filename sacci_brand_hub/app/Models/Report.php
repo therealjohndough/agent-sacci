@@ -51,6 +51,21 @@ class Report extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function searchByTerm(string $term, int $limit = 8): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->prepare(
+            'SELECT id, title, summary
+             FROM reports
+             WHERE title LIKE :term OR summary LIKE :term
+             ORDER BY COALESCE(reporting_period_end, reporting_period_start, DATE(updated_at)) DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['term' => '%' . $term . '%']);
+
+        return $stmt->fetchAll();
+    }
+
     public static function findWithRelations(int $id): ?array
     {
         $stmt = self::db()->prepare(

@@ -36,6 +36,21 @@ class Meeting extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function searchByTerm(string $term, int $limit = 8): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->prepare(
+            'SELECT id, title, summary
+             FROM meetings
+             WHERE title LIKE :term OR summary LIKE :term OR notes LIKE :term
+             ORDER BY COALESCE(occurred_at, scheduled_for, created_at) DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['term' => '%' . $term . '%']);
+
+        return $stmt->fetchAll();
+    }
+
     public static function findWithDepartment(int $id): ?array
     {
         $stmt = self::db()->prepare(

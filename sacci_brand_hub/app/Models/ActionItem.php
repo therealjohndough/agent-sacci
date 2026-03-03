@@ -55,6 +55,21 @@ class ActionItem extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function searchByTerm(string $term, int $limit = 8): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->prepare(
+            'SELECT id, title, details
+             FROM action_items
+             WHERE title LIKE :term OR details LIKE :term
+             ORDER BY due_date IS NULL, due_date ASC, created_at DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['term' => '%' . $term . '%']);
+
+        return $stmt->fetchAll();
+    }
+
     public static function findBySource(string $sourceType, int $sourceId): array
     {
         $stmt = self::db()->prepare(

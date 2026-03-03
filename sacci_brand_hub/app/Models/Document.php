@@ -51,6 +51,21 @@ class Document extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public static function searchByTerm(string $term, int $limit = 8): array
+    {
+        $limit = max(1, $limit);
+        $stmt = self::db()->prepare(
+            'SELECT id, title, content
+             FROM documents
+             WHERE title LIKE :term OR content LIKE :term
+             ORDER BY updated_at DESC
+             LIMIT ' . $limit
+        );
+        $stmt->execute(['term' => '%' . $term . '%']);
+
+        return $stmt->fetchAll();
+    }
+
     public static function findWithRelations(int $id): ?array
     {
         $stmt = self::db()->prepare(
