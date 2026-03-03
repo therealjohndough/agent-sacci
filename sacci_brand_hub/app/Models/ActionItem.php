@@ -6,6 +6,18 @@ class ActionItem extends BaseModel
 {
     protected static string $table = 'action_items';
 
+    public static function countOpen(): int
+    {
+        $stmt = self::db()->prepare(
+            'SELECT COUNT(*)
+             FROM action_items
+             WHERE status IN ("open", "in_progress", "blocked")'
+        );
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public static function findAllWithRelations(): array
     {
         $stmt = self::db()->query(

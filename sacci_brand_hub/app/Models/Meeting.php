@@ -6,6 +6,11 @@ class Meeting extends BaseModel
 {
     protected static string $table = 'meetings';
 
+    public static function countAll(): int
+    {
+        return (int) self::db()->query('SELECT COUNT(*) FROM meetings')->fetchColumn();
+    }
+
     public static function findAllWithDepartment(): array
     {
         $stmt = self::db()->query(

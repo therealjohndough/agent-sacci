@@ -6,6 +6,18 @@ class Document extends BaseModel
 {
     protected static string $table = 'documents';
 
+    public static function countActive(): int
+    {
+        $stmt = self::db()->prepare(
+            'SELECT COUNT(*)
+             FROM documents
+             WHERE status = "active"'
+        );
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public static function findAllWithRelations(): array
     {
         $stmt = self::db()->query(

@@ -1,5 +1,18 @@
 <h1 class="page-title">Dashboard</h1>
 <p>Welcome, <?= htmlspecialchars($user['name'] ?? $user['email']) ?>!</p>
+
+<?php if (!empty($metrics)): ?>
+    <div class="metric-grid">
+        <?php foreach ($metrics as $metric): ?>
+            <div class="card metric-card">
+                <p class="metric-label"><?= htmlspecialchars($metric['label']) ?></p>
+                <p class="metric-value"><?= htmlspecialchars((string) $metric['value']) ?></p>
+                <p><a href="<?= htmlspecialchars(\Config\appUrl($metric['link'])) ?>" class="app-link">Open</a></p>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
 <h2 class="section-title">My Tickets</h2>
 <?php if (empty($tickets)): ?>
     <div class="card">No tickets assigned to you.</div>

@@ -6,6 +6,18 @@ class Report extends BaseModel
 {
     protected static string $table = 'reports';
 
+    public static function countPublished(): int
+    {
+        $stmt = self::db()->prepare(
+            'SELECT COUNT(*)
+             FROM reports
+             WHERE status = "published"'
+        );
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public static function findAllWithRelations(): array
     {
         $stmt = self::db()->query(
