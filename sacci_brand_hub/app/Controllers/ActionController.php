@@ -18,11 +18,13 @@ class ActionController extends BaseController
         try {
             $this->render('app/actions/index', [
                 'actionItems' => ActionItem::findAllWithRelations(),
+                'csrf' => $this->csrfToken(),
             ]);
         } catch (PDOException) {
             $this->render('app/actions/index', [
                 'actionItems' => [],
                 'setupRequired' => true,
+                'csrf' => $this->csrfToken(),
             ]);
         }
     }
@@ -137,6 +139,35 @@ class ActionController extends BaseController
             ]);
         } catch (PDOException) {
             $this->renderActionForm($values, 'Unable to update action item right now.', true, true);
+            return;
+        }
+
+        $this->redirect('/actions');
+    }
+
+    public function archive(): void
+    {
+        $this->requireLogin();
+
+        $actionId = (int) ($_POST['id'] ?? 0);
+        $actionItem = ActionItem::find($actionId);
+        if (!$actionItem) {
+            http_response_code(404);
+            echo 'Action item not found';
+            return;
+        }
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        try {
+            ActionItem::update($actionId, [
+                'status' => 'archived',
+            ]);
+        } catch (PDOException) {
+            echo 'Unable to archive action item';
             return;
         }
 

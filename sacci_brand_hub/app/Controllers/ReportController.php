@@ -150,6 +150,35 @@ class ReportController extends BaseController
         $this->redirect('/reports?id=' . $reportId);
     }
 
+    public function archive(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_POST['id'] ?? 0);
+        $report = Report::find($reportId);
+        if (!$report) {
+            http_response_code(404);
+            echo 'Report not found';
+            return;
+        }
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        try {
+            Report::update($reportId, [
+                'status' => 'archived',
+            ]);
+        } catch (PDOException) {
+            echo 'Unable to archive report';
+            return;
+        }
+
+        $this->redirect('/reports');
+    }
+
     public function storeEntry(): void
     {
         $this->requireLogin();

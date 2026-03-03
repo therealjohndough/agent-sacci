@@ -147,6 +147,35 @@ class DocumentController extends BaseController
         $this->redirect('/documents?id=' . $documentId);
     }
 
+    public function archive(): void
+    {
+        $this->requireLogin();
+
+        $documentId = (int) ($_POST['id'] ?? 0);
+        $document = Document::find($documentId);
+        if (!$document) {
+            http_response_code(404);
+            echo 'Document not found';
+            return;
+        }
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        try {
+            Document::update($documentId, [
+                'status' => 'archived',
+            ]);
+        } catch (PDOException) {
+            echo 'Unable to archive document';
+            return;
+        }
+
+        $this->redirect('/documents');
+    }
+
     private function show(int $documentId): void
     {
         $document = Document::findWithRelations($documentId);
@@ -158,6 +187,7 @@ class DocumentController extends BaseController
 
         $this->render('app/documents/show', [
             'document' => $document,
+            'csrf' => $this->csrfToken(),
         ]);
     }
 

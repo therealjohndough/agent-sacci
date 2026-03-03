@@ -154,6 +154,35 @@ class MeetingController extends BaseController
         $this->redirect('/meetings?id=' . $meetingId);
     }
 
+    public function archive(): void
+    {
+        $this->requireLogin();
+
+        $meetingId = (int) ($_POST['id'] ?? 0);
+        $meeting = Meeting::find($meetingId);
+        if (!$meeting) {
+            http_response_code(404);
+            echo 'Meeting not found';
+            return;
+        }
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        try {
+            Meeting::update($meetingId, [
+                'status' => 'archived',
+            ]);
+        } catch (PDOException) {
+            echo 'Unable to archive meeting';
+            return;
+        }
+
+        $this->redirect('/meetings');
+    }
+
     private function show(int $meetingId): void
     {
         $meeting = Meeting::findWithDepartment($meetingId);
@@ -167,6 +196,7 @@ class MeetingController extends BaseController
             'meeting' => $meeting,
             'decisions' => Meeting::findDecisions($meetingId),
             'actionItems' => $this->findRelatedActionItems($meetingId),
+            'csrf' => $this->csrfToken(),
         ]);
     }
 

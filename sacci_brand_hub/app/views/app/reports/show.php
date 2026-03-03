@@ -1,5 +1,10 @@
 <h1 class="page-title"><?= htmlspecialchars($report['title']) ?></h1>
 <p><a href="<?= htmlspecialchars(\Config\appUrl('/reports/edit')) ?>?id=<?= urlencode((string) $report['id']) ?>" class="app-link">Edit report</a></p>
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/reports/archive')) ?>" class="inline-form">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+    <input type="hidden" name="id" value="<?= htmlspecialchars((string) $report['id']) ?>">
+    <button type="submit" class="button-link">Archive report</button>
+</form>
 <div class="card">
     <p class="meta-text">
         <strong>Type:</strong> <?= htmlspecialchars($report['report_type']) ?>

@@ -1,5 +1,10 @@
 <h1 class="page-title"><?= htmlspecialchars($meeting['title']) ?></h1>
 <p><a href="<?= htmlspecialchars(\Config\appUrl('/meetings/edit')) ?>?id=<?= urlencode((string) $meeting['id']) ?>" class="app-link">Edit meeting</a></p>
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/meetings/archive')) ?>" class="inline-form">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+    <input type="hidden" name="id" value="<?= htmlspecialchars((string) $meeting['id']) ?>">
+    <button type="submit" class="button-link">Archive meeting</button>
+</form>
 <div class="card">
     <p class="meta-text">
         <strong>Type:</strong> <?= htmlspecialchars($meeting['meeting_type']) ?>

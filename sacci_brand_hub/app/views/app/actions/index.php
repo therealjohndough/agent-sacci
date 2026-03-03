@@ -11,6 +11,11 @@
         <div class="card">
             <h3 class="card-title"><?= htmlspecialchars($item['title']) ?></h3>
             <p><a href="<?= htmlspecialchars(\Config\appUrl('/actions/edit')) ?>?id=<?= urlencode((string) $item['id']) ?>" class="app-link">Edit action item</a></p>
+            <form method="post" action="<?= htmlspecialchars(\Config\appUrl('/actions/archive')) ?>" class="inline-form">
+                <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+                <input type="hidden" name="id" value="<?= htmlspecialchars((string) $item['id']) ?>">
+                <button type="submit" class="button-link">Archive action item</button>
+            </form>
             <?php if (!empty($item['details'])): ?>
                 <p><?= nl2br(htmlspecialchars($item['details'])) ?></p>
             <?php endif; ?>

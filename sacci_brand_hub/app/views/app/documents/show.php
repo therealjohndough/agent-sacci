@@ -1,5 +1,10 @@
 <h1 class="page-title"><?= htmlspecialchars($document['title']) ?></h1>
 <p><a href="<?= htmlspecialchars(\Config\appUrl('/documents/edit')) ?>?id=<?= urlencode((string) $document['id']) ?>" class="app-link">Edit document</a></p>
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/documents/archive')) ?>" class="inline-form">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
+    <input type="hidden" name="id" value="<?= htmlspecialchars((string) $document['id']) ?>">
+    <button type="submit" class="button-link">Archive document</button>
+</form>
 <div class="card">
     <p class="meta-text">
         <strong>Type:</strong> <?= htmlspecialchars($document['document_type']) ?>
