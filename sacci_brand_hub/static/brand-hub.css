@@ -1,0 +1,125 @@
+:root {
+    --color-primary: #31935f;
+    --color-accent: #d4a837;
+    --color-bg: #0d0d0d;
+    --color-surface: #f5f0e8;
+    --color-card: #1a1a1a;
+    --color-muted: #888880;
+    --color-danger: #e74c3c;
+    --color-danger-border: #c0392b;
+    --border-subtle: 1px solid rgba(212, 168, 55, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background: var(--color-bg);
+    color: var(--color-surface);
+}
+
+.navbar {
+    background: #111;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-accent);
+}
+
+.navbar a {
+    color: var(--color-muted);
+    margin-right: 15px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.navbar a.active {
+    color: var(--color-accent);
+}
+
+.navbar a:last-child {
+    margin-right: 0;
+}
+
+.container {
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.card {
+    background: var(--color-card);
+    padding: 20px;
+    border: var(--border-subtle);
+    margin-bottom: 20px;
+    border-radius: 2px;
+}
+
+.page-title {
+    color: var(--color-accent);
+    margin: 0 0 20px;
+}
+
+.section-title {
+    color: var(--color-primary);
+    margin: 30px 0 16px;
+}
+
+.card-title {
+    margin: 0 0 12px;
+    color: var(--color-accent);
+}
+
+.app-link {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.logout-link {
+    color: var(--color-accent) !important;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(212, 168, 55, 0.25);
+    background: #121212;
+    color: var(--color-surface);
+}
+
+.form-input + .form-label {
+    margin-top: 18px;
+}
+
+.button-primary {
+    margin-top: 18px;
+    padding: 10px 20px;
+    background: var(--color-accent);
+    color: var(--color-bg);
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.error-card {
+    border-left: 3px solid var(--color-danger-border);
+    color: var(--color-danger);
+}
+
+.notice-card {
+    border-left: 3px solid var(--color-primary);
+}
+
+.meta-text {
+    color: var(--color-muted);
+    font-size: 14px;
+}

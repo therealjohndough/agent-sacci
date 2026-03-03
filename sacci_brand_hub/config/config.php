@@ -45,3 +45,53 @@ function env(string $key, mixed $default = null): mixed
     }
     return $value;
 }
+
+/**
+ * Resolve the application base path for subfolder deployments.
+ */
+function appBase(?string $scriptName = null): string
+{
+    if (\defined('APP_BASE')) {
+        return APP_BASE;
+    }
+
+    $configured = env('APP_BASE');
+    if (is_string($configured) && $configured !== '') {
+        return '/' . trim($configured, '/');
+    }
+
+    $scriptName ??= $_SERVER['SCRIPT_NAME'] ?? '';
+    $base = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+
+    return ($base === '' || $base === '.') ? '' : $base;
+}
+
+/**
+ * Generate an in-app URL that respects the configured base path.
+ */
+function appUrl(string $path = '/'): string
+{
+    $normalizedPath = '/' . ltrim($path, '/');
+    $base = appBase();
+
+    if ($normalizedPath === '/') {
+        return $base !== '' ? $base . '/' : '/';
+    }
+
+    return ($base !== '' ? $base : '') . $normalizedPath;
+}
+
+/**
+ * Return the current request path without the application base prefix.
+ */
+function requestPath(): string
+{
+    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $base = appBase();
+
+    if ($base !== '' && str_starts_with($uri, $base)) {
+        $uri = substr($uri, strlen($base)) ?: '/';
+    }
+
+    return '/' . trim($uri, '/');
+}

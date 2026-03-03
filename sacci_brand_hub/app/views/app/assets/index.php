@@ -1,11 +1,11 @@
-<h1 style="color: var(--color-accent); margin-bottom:20px;">Assets</h1>
+<h1 class="page-title">Assets</h1>
 <?php if (empty($assets)): ?>
     <div class="card">No assets available.</div>
 <?php else: ?>
     <?php foreach ($assets as $asset): ?>
         <div class="card">
-            <h3 style="margin-top:0; color: var(--color-accent);">
-                <a href="/assets?id=<?= $asset['id'] ?>" style="color: var(--color-accent); text-decoration:none;">
+            <h3 class="card-title">
+                <a href="<?= htmlspecialchars(\Config\appUrl('/assets')) ?>?id=<?= urlencode((string) $asset['id']) ?>" class="app-link">
                     <?= htmlspecialchars($asset['name']) ?>
                 </a>
             </h3>

@@ -32,8 +32,14 @@ spl_autoload_register(function ($class) {
 // Load environment variables
 Config\loadEnv(__DIR__ . '/.env');
 
-// Base path for subfolder install — prepended to all redirects by BaseController
-define('APP_BASE', '/sacci_brand_hub');
+// Base path for subfolder install — auto-detected, but overridable via .env.
+define('APP_BASE', Config\appBase($_SERVER['SCRIPT_NAME'] ?? ''));
+
+// Baseline hardening headers for auth and internal tooling pages.
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; form-action 'self'; base-uri 'self'; frame-ancestors 'self'");
 
 // Create router and register routes
 $router = new Core\Router();
@@ -49,6 +55,8 @@ $router->add('GET',  '/tickets',            [App\Controllers\TicketController::c
 
 $router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
+
+$router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 
