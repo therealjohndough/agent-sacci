@@ -1,17 +1,18 @@
 <?php
 
 // Front controller
-use Core\Router;
-use Config;
 
-// Start session
+// Start session first
 session_start();
+
+// Manually require the config file that defines Config\loadEnv()
+require_once __DIR__ . '/config/config.php';
 
 // Autoloader for PSR-4 style classes
 spl_autoload_register(function ($class) {
     $prefixes = [
-        'App\\' => __DIR__ . '/app/',
-        'Core\\' => __DIR__ . '/core/',
+        'App\\'    => __DIR__ . '/app/',
+        'Core\\'   => __DIR__ . '/core/',
         'Config\\' => __DIR__ . '/config/',
     ];
     foreach ($prefixes as $prefix => $baseDir) {
@@ -31,31 +32,30 @@ spl_autoload_register(function ($class) {
 // Load environment variables
 Config\loadEnv(__DIR__ . '/.env');
 
-// Determine the application base path for subfolder installs (e.g. /sacci_brand_hub).
-// SCRIPT_NAME is e.g. /sacci_brand_hub/index.php when installed in a subfolder.
-define('APP_BASE', rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\'));
-
 // Create router and register routes
-$router = new Router();
-$router->setBasePath(APP_BASE);
+$router = new Core\Router();
 
-$router->add('GET', '/', [App\Controllers\AuthController::class, 'login']);
-$router->add('GET', '/login', [App\Controllers\AuthController::class, 'login']);
-$router->add('POST', '/login', [App\Controllers\AuthController::class, 'login']);
-$router->add('GET', '/logout', [App\Controllers\AuthController::class, 'logout']);
+$router->add('GET',  '/',                   [App\Controllers\AuthController::class, 'login']);
+$router->add('GET',  '/login',              [App\Controllers\AuthController::class, 'login']);
+$router->add('POST', '/login',              [App\Controllers\AuthController::class, 'login']);
+$router->add('GET',  '/logout',             [App\Controllers\AuthController::class, 'logout']);
 
-$router->add('GET', '/app', [App\Controllers\DashboardController::class, 'index']);
+$router->add('GET',  '/app',                [App\Controllers\DashboardController::class, 'index']);
 
-$router->add('GET', '/tickets', [App\Controllers\TicketController::class, 'index']);
+$router->add('GET',  '/tickets',            [App\Controllers\TicketController::class, 'index']);
 
-$router->add('GET', '/assets', [App\Controllers\AssetController::class, 'index']);
-$router->add('GET', '/assets/download', [App\Controllers\AssetController::class, 'download']);
+$router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
+$router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
 
-$router->add('GET', '/portal', [App\Controllers\PortalController::class, 'index']);
+$router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 
-$router->add('GET', '/content', [App\Controllers\ContentController::class, 'index']);
+$router->add('GET',  '/content',            [App\Controllers\ContentController::class, 'index']);
 
 // Dispatch based on current request
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$uri = $_SERVER['REQUEST_URI'] ?? '/';
+$uri    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$base   = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+if ($base !== '' && str_starts_with($uri, $base)) {
+    $uri = substr($uri, strlen($base)) ?: '/';
+}
 $router->dispatch($method, $uri);
