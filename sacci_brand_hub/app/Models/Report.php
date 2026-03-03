@@ -106,4 +106,33 @@ class Report extends BaseModel
 
         return (int) self::db()->lastInsertId();
     }
+
+    public static function findEntry(int $entryId): ?array
+    {
+        $stmt = self::db()->prepare(
+            'SELECT *
+             FROM report_entries
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $stmt->execute(['id' => $entryId]);
+        $entry = $stmt->fetch();
+
+        return $entry ?: null;
+    }
+
+    public static function updateEntry(int $entryId, array $data): void
+    {
+        $assignments = [];
+        foreach ($data as $key => $value) {
+            $assignments[] = $key . ' = :' . $key;
+        }
+
+        $data['id'] = $entryId;
+        $sql = 'UPDATE report_entries
+                SET ' . implode(', ', $assignments) . '
+                WHERE id = :id';
+        $stmt = self::db()->prepare($sql);
+        $stmt->execute($data);
+    }
 }

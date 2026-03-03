@@ -192,6 +192,83 @@ class ReportController extends BaseController
         $this->redirect('/reports?id=' . $reportId);
     }
 
+    public function editEntry(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_GET['report_id'] ?? 0);
+        $entryId = (int) ($_GET['entry_id'] ?? 0);
+        $report = Report::findWithRelations($reportId);
+        $entry = Report::findEntry($entryId);
+
+        if (!$report || !$entry || (int) $entry['report_id'] !== $reportId) {
+            http_response_code(404);
+            echo 'Report entry not found';
+            return;
+        }
+
+        $this->renderReportShow(
+            $report,
+            null,
+            [
+                'report_id' => (string) $reportId,
+                'id' => (string) $entry['id'],
+                'metric_key' => $entry['metric_key'] ?? '',
+                'metric_label' => $entry['metric_label'] ?? '',
+                'metric_value' => $entry['metric_value'] ?? '',
+                'metric_unit' => $entry['metric_unit'] ?? '',
+                'notes' => $entry['notes'] ?? '',
+                'sort_order' => $entry['sort_order'] !== null ? (string) $entry['sort_order'] : '',
+            ],
+            true
+        );
+    }
+
+    public function updateEntry(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_POST['report_id'] ?? 0);
+        $entryId = (int) ($_POST['id'] ?? 0);
+        $report = Report::findWithRelations($reportId);
+        $entry = Report::findEntry($entryId);
+
+        if (!$report || !$entry || (int) $entry['report_id'] !== $reportId) {
+            http_response_code(404);
+            echo 'Report entry not found';
+            return;
+        }
+
+        $values = $this->submittedEntryValues();
+        $values['id'] = (string) $entryId;
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['metric_key'] === '' || $values['metric_label'] === '') {
+            $this->renderReportShow($report, 'Metric key and label are required.', $values, true);
+            return;
+        }
+
+        try {
+            Report::updateEntry($entryId, [
+                'metric_key' => $values['metric_key'],
+                'metric_label' => $values['metric_label'],
+                'metric_value' => $values['metric_value'] !== '' ? $values['metric_value'] : null,
+                'metric_unit' => $values['metric_unit'] !== '' ? $values['metric_unit'] : null,
+                'notes' => $values['notes'] !== '' ? $values['notes'] : null,
+                'sort_order' => $values['sort_order'] !== '' ? (int) $values['sort_order'] : 0,
+            ]);
+        } catch (PDOException) {
+            $this->renderReportShow($report, 'Unable to update report entry right now.', $values, true);
+            return;
+        }
+
+        $this->redirect('/reports?id=' . $reportId);
+    }
+
     private function show(int $reportId): void
     {
         $report = Report::findWithRelations($reportId);
@@ -204,13 +281,14 @@ class ReportController extends BaseController
         $this->renderReportShow($report);
     }
 
-    private function renderReportShow(array $report, ?string $entryError = null, ?array $entryValues = null): void
+    private function renderReportShow(array $report, ?string $entryError = null, ?array $entryValues = null, bool $isEntryEdit = false): void
     {
         $this->render('app/reports/show', [
             'report' => $report,
             'entries' => Report::findEntries((int) $report['id']),
             'entryError' => $entryError,
             'entryValues' => $entryValues ?? $this->defaultEntryValues((int) $report['id']),
+            'isEntryEdit' => $isEntryEdit,
             'csrf' => $this->csrfToken(),
         ]);
     }

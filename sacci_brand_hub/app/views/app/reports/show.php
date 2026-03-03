@@ -38,6 +38,9 @@
         <div class="card">
             <h3 class="card-title"><?= htmlspecialchars($entry['metric_label']) ?></h3>
             <p>
+                <a href="<?= htmlspecialchars(\Config\appUrl('/reports/entries/edit')) ?>?report_id=<?= urlencode((string) $report['id']) ?>&entry_id=<?= urlencode((string) $entry['id']) ?>" class="app-link">Edit entry</a>
+            </p>
+            <p>
                 <strong>Value:</strong>
                 <?= htmlspecialchars($entry['metric_value'] ?? 'N/A') ?>
                 <?php if (!empty($entry['metric_unit'])): ?>
@@ -51,15 +54,18 @@
     <?php endforeach; ?>
 <?php endif; ?>
 
-<h2 class="section-title">Add Entry</h2>
+<h2 class="section-title"><?= !empty($isEntryEdit) ? 'Edit Entry' : 'Add Entry' ?></h2>
 <?php if (!empty($entryError)): ?>
     <div class="card error-card">
         <?= htmlspecialchars($entryError) ?>
     </div>
 <?php endif; ?>
-<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/reports/entries')) ?>">
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl(!empty($isEntryEdit) ? '/reports/entries/update' : '/reports/entries')) ?>">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '') ?>">
     <input type="hidden" name="report_id" value="<?= htmlspecialchars($entryValues['report_id'] ?? (string) $report['id']) ?>">
+    <?php if (!empty($isEntryEdit)): ?>
+        <input type="hidden" name="id" value="<?= htmlspecialchars($entryValues['id'] ?? '') ?>">
+    <?php endif; ?>
     <div class="card">
         <label for="metric_key" class="form-label">Metric Key</label>
         <input type="text" id="metric_key" name="metric_key" required class="form-input" value="<?= htmlspecialchars($entryValues['metric_key'] ?? '') ?>">
@@ -79,6 +85,6 @@
         <label for="entry_notes" class="form-label">Notes</label>
         <textarea id="entry_notes" name="notes" class="form-input form-textarea"><?= htmlspecialchars($entryValues['notes'] ?? '') ?></textarea>
 
-        <button type="submit" class="button-primary">Add Entry</button>
+        <button type="submit" class="button-primary"><?= !empty($isEntryEdit) ? 'Update Entry' : 'Add Entry' ?></button>
     </div>
 </form>
