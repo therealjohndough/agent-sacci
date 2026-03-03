@@ -1,4 +1,5 @@
 <h1 class="page-title"><?= htmlspecialchars($meeting['title']) ?></h1>
+<p><a href="<?= htmlspecialchars(\Config\appUrl('/meetings/edit')) ?>?id=<?= urlencode((string) $meeting['id']) ?>" class="app-link">Edit meeting</a></p>
 <div class="card">
     <p class="meta-text">
         <strong>Type:</strong> <?= htmlspecialchars($meeting['meeting_type']) ?>

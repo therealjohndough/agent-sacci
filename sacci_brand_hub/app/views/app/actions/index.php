@@ -10,6 +10,7 @@
     <?php foreach ($actionItems as $item): ?>
         <div class="card">
             <h3 class="card-title"><?= htmlspecialchars($item['title']) ?></h3>
+            <p><a href="<?= htmlspecialchars(\Config\appUrl('/actions/edit')) ?>?id=<?= urlencode((string) $item['id']) ?>" class="app-link">Edit action item</a></p>
             <?php if (!empty($item['details'])): ?>
                 <p><?= nl2br(htmlspecialchars($item['details'])) ?></p>
             <?php endif; ?>

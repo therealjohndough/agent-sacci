@@ -1,4 +1,4 @@
-<h1 class="page-title">New Document</h1>
+<h1 class="page-title"><?= !empty($isEdit) ? 'Edit Document' : 'New Document' ?></h1>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The document form is available in code, but the database tables are not ready yet. Run migrations `009` and `010` to enable creation.
@@ -10,8 +10,11 @@
     </div>
 <?php endif; ?>
 
-<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/documents')) ?>">
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl(!empty($isEdit) ? '/documents/update' : '/documents')) ?>">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <?php if (!empty($isEdit)): ?>
+        <input type="hidden" name="id" value="<?= htmlspecialchars($values['id'] ?? '') ?>">
+    <?php endif; ?>
     <div class="card">
         <label for="title" class="form-label">Title</label>
         <input type="text" id="title" name="title" required class="form-input" value="<?= htmlspecialchars($values['title'] ?? '') ?>">
@@ -47,6 +50,6 @@
         <label for="content" class="form-label">Content</label>
         <textarea id="content" name="content" required class="form-input form-textarea"><?= htmlspecialchars($values['content'] ?? '') ?></textarea>
 
-        <button type="submit" class="button-primary">Create Document</button>
+        <button type="submit" class="button-primary"><?= !empty($isEdit) ? 'Update Document' : 'Create Document' ?></button>
     </div>
 </form>

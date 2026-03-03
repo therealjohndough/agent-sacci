@@ -38,19 +38,34 @@ class DocumentController extends BaseController
         $this->requireLogin();
 
         try {
-            $this->render('app/documents/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => Department::findAllOrdered(),
-                'values' => $this->defaultFormValues(),
-            ]);
+            $this->renderDocumentForm($this->defaultFormValues());
         } catch (PDOException) {
-            $this->render('app/documents/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => [],
-                'values' => $this->defaultFormValues(),
-                'setupRequired' => true,
-            ]);
+            $this->renderDocumentForm($this->defaultFormValues(), null, true);
         }
+    }
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+
+        $documentId = (int) ($_GET['id'] ?? 0);
+        $document = Document::find($documentId);
+        if (!$document) {
+            http_response_code(404);
+            echo 'Document not found';
+            return;
+        }
+
+        $this->renderDocumentForm([
+            'id' => (string) $document['id'],
+            'title' => $document['title'] ?? '',
+            'document_type' => $document['document_type'] ?? 'reference',
+            'department_id' => $document['department_id'] !== null ? (string) $document['department_id'] : '',
+            'status' => $document['status'] ?? 'draft',
+            'source_url' => $document['source_url'] ?? '',
+            'version_label' => $document['version_label'] ?? '',
+            'content' => $document['content'] ?? '',
+        ], null, false, true);
     }
 
     public function store(): void
@@ -65,7 +80,7 @@ class DocumentController extends BaseController
         }
 
         if ($values['title'] === '' || $values['content'] === '') {
-            $this->renderCreateForm($values, 'Title and content are required.');
+            $this->renderDocumentForm($values, 'Title and content are required.');
             return;
         }
 
@@ -82,7 +97,50 @@ class DocumentController extends BaseController
                 'version_label' => $values['version_label'] !== '' ? $values['version_label'] : null,
             ]);
         } catch (PDOException) {
-            $this->renderCreateForm($values, 'The documents tables are not ready yet. Run migrations first.', true);
+            $this->renderDocumentForm($values, 'The documents tables are not ready yet. Run migrations first.', true);
+            return;
+        }
+
+        $this->redirect('/documents?id=' . $documentId);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+
+        $documentId = (int) ($_POST['id'] ?? 0);
+        $document = Document::find($documentId);
+        if (!$document) {
+            http_response_code(404);
+            echo 'Document not found';
+            return;
+        }
+
+        $values = $this->submittedFormValues();
+        $values['id'] = (string) $documentId;
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['title'] === '' || $values['content'] === '') {
+            $this->renderDocumentForm($values, 'Title and content are required.', false, true);
+            return;
+        }
+
+        try {
+            Document::update($documentId, [
+                'title' => $values['title'],
+                'document_type' => $values['document_type'],
+                'department_id' => $values['department_id'] !== '' ? (int) $values['department_id'] : null,
+                'status' => $values['status'],
+                'source_url' => $values['source_url'] !== '' ? $values['source_url'] : null,
+                'content' => $values['content'],
+                'version_label' => $values['version_label'] !== '' ? $values['version_label'] : null,
+            ]);
+        } catch (PDOException) {
+            $this->renderDocumentForm($values, 'Unable to update document right now.', true, true);
             return;
         }
 
@@ -103,7 +161,7 @@ class DocumentController extends BaseController
         ]);
     }
 
-    private function renderCreateForm(array $values, string $error, bool $setupRequired = false): void
+    private function renderDocumentForm(array $values, ?string $error = null, bool $setupRequired = false, bool $isEdit = false): void
     {
         try {
             $departments = Department::findAllOrdered();
@@ -118,6 +176,7 @@ class DocumentController extends BaseController
             'values' => $values,
             'error' => $error,
             'setupRequired' => $setupRequired,
+            'isEdit' => $isEdit,
         ]);
     }
 

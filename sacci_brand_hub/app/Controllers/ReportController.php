@@ -38,19 +38,35 @@ class ReportController extends BaseController
         $this->requireLogin();
 
         try {
-            $this->render('app/reports/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => Department::findAllOrdered(),
-                'values' => $this->defaultFormValues(),
-            ]);
+            $this->renderReportForm($this->defaultFormValues());
         } catch (PDOException) {
-            $this->render('app/reports/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => [],
-                'values' => $this->defaultFormValues(),
-                'setupRequired' => true,
-            ]);
+            $this->renderReportForm($this->defaultFormValues(), null, true);
         }
+    }
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_GET['id'] ?? 0);
+        $report = Report::find($reportId);
+        if (!$report) {
+            http_response_code(404);
+            echo 'Report not found';
+            return;
+        }
+
+        $this->renderReportForm([
+            'id' => (string) $report['id'],
+            'title' => $report['title'] ?? '',
+            'report_type' => $report['report_type'] ?? 'general',
+            'department_id' => $report['department_id'] !== null ? (string) $report['department_id'] : '',
+            'reporting_period_start' => $report['reporting_period_start'] ?? '',
+            'reporting_period_end' => $report['reporting_period_end'] ?? '',
+            'status' => $report['status'] ?? 'draft',
+            'source_url' => $report['source_url'] ?? '',
+            'summary' => $report['summary'] ?? '',
+        ], null, false, true);
     }
 
     public function store(): void
@@ -65,7 +81,7 @@ class ReportController extends BaseController
         }
 
         if ($values['title'] === '') {
-            $this->renderCreateForm($values, 'Title is required.');
+            $this->renderReportForm($values, 'Title is required.');
             return;
         }
 
@@ -83,7 +99,51 @@ class ReportController extends BaseController
                 'summary' => $values['summary'] !== '' ? $values['summary'] : null,
             ]);
         } catch (PDOException) {
-            $this->renderCreateForm($values, 'The reports tables are not ready yet. Run migrations first.', true);
+            $this->renderReportForm($values, 'The reports tables are not ready yet. Run migrations first.', true);
+            return;
+        }
+
+        $this->redirect('/reports?id=' . $reportId);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+
+        $reportId = (int) ($_POST['id'] ?? 0);
+        $report = Report::find($reportId);
+        if (!$report) {
+            http_response_code(404);
+            echo 'Report not found';
+            return;
+        }
+
+        $values = $this->submittedFormValues();
+        $values['id'] = (string) $reportId;
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['title'] === '') {
+            $this->renderReportForm($values, 'Title is required.', false, true);
+            return;
+        }
+
+        try {
+            Report::update($reportId, [
+                'title' => $values['title'],
+                'report_type' => $values['report_type'],
+                'department_id' => $values['department_id'] !== '' ? (int) $values['department_id'] : null,
+                'reporting_period_start' => $values['reporting_period_start'] !== '' ? $values['reporting_period_start'] : null,
+                'reporting_period_end' => $values['reporting_period_end'] !== '' ? $values['reporting_period_end'] : null,
+                'status' => $values['status'],
+                'source_url' => $values['source_url'] !== '' ? $values['source_url'] : null,
+                'summary' => $values['summary'] !== '' ? $values['summary'] : null,
+            ]);
+        } catch (PDOException) {
+            $this->renderReportForm($values, 'Unable to update report right now.', true, true);
             return;
         }
 
@@ -105,7 +165,7 @@ class ReportController extends BaseController
         ]);
     }
 
-    private function renderCreateForm(array $values, string $error, bool $setupRequired = false): void
+    private function renderReportForm(array $values, ?string $error = null, bool $setupRequired = false, bool $isEdit = false): void
     {
         try {
             $departments = Department::findAllOrdered();
@@ -120,6 +180,7 @@ class ReportController extends BaseController
             'values' => $values,
             'error' => $error,
             'setupRequired' => $setupRequired,
+            'isEdit' => $isEdit,
         ]);
     }
 

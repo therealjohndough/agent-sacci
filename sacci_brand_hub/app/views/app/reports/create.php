@@ -1,4 +1,4 @@
-<h1 class="page-title">New Report</h1>
+<h1 class="page-title"><?= !empty($isEdit) ? 'Edit Report' : 'New Report' ?></h1>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The report form is available in code, but the database tables are not ready yet. Run migrations `011` and `012` to enable creation.
@@ -10,8 +10,11 @@
     </div>
 <?php endif; ?>
 
-<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/reports')) ?>">
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl(!empty($isEdit) ? '/reports/update' : '/reports')) ?>">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <?php if (!empty($isEdit)): ?>
+        <input type="hidden" name="id" value="<?= htmlspecialchars($values['id'] ?? '') ?>">
+    <?php endif; ?>
     <div class="card">
         <label for="title" class="form-label">Title</label>
         <input type="text" id="title" name="title" required class="form-input" value="<?= htmlspecialchars($values['title'] ?? '') ?>">
@@ -50,6 +53,6 @@
         <label for="summary" class="form-label">Summary</label>
         <textarea id="summary" name="summary" class="form-input form-textarea"><?= htmlspecialchars($values['summary'] ?? '') ?></textarea>
 
-        <button type="submit" class="button-primary">Create Report</button>
+        <button type="submit" class="button-primary"><?= !empty($isEdit) ? 'Update Report' : 'Create Report' ?></button>
     </div>
 </form>

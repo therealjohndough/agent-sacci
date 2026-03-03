@@ -39,19 +39,36 @@ class MeetingController extends BaseController
         $this->requireLogin();
 
         try {
-            $this->render('app/meetings/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => Department::findAllOrdered(),
-                'values' => $this->defaultFormValues(),
-            ]);
+            $this->renderMeetingForm($this->defaultFormValues());
         } catch (PDOException) {
-            $this->render('app/meetings/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => [],
-                'values' => $this->defaultFormValues(),
-                'setupRequired' => true,
-            ]);
+            $this->renderMeetingForm($this->defaultFormValues(), null, true);
         }
+    }
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+
+        $meetingId = (int) ($_GET['id'] ?? 0);
+        $meeting = Meeting::find($meetingId);
+        if (!$meeting) {
+            http_response_code(404);
+            echo 'Meeting not found';
+            return;
+        }
+
+        $this->renderMeetingForm([
+            'id' => (string) $meeting['id'],
+            'title' => $meeting['title'] ?? '',
+            'meeting_type' => $meeting['meeting_type'] ?? 'general',
+            'department_id' => $meeting['department_id'] !== null ? (string) $meeting['department_id'] : '',
+            'scheduled_for' => $this->formatDateTimeForInput($meeting['scheduled_for'] ?? ''),
+            'occurred_at' => $this->formatDateTimeForInput($meeting['occurred_at'] ?? ''),
+            'status' => $meeting['status'] ?? 'draft',
+            'summary' => $meeting['summary'] ?? '',
+            'notes' => $meeting['notes'] ?? '',
+            'source_url' => $meeting['source_url'] ?? '',
+        ], null, false, true);
     }
 
     public function store(): void
@@ -66,7 +83,7 @@ class MeetingController extends BaseController
         }
 
         if ($values['title'] === '' || $values['notes'] === '') {
-            $this->renderCreateForm($values, 'Title and notes are required.');
+            $this->renderMeetingForm($values, 'Title and notes are required.');
             return;
         }
 
@@ -85,7 +102,52 @@ class MeetingController extends BaseController
                 'source_url' => $values['source_url'] !== '' ? $values['source_url'] : null,
             ]);
         } catch (PDOException) {
-            $this->renderCreateForm($values, 'The meetings tables are not ready yet. Run migrations first.', true);
+            $this->renderMeetingForm($values, 'The meetings tables are not ready yet. Run migrations first.', true);
+            return;
+        }
+
+        $this->redirect('/meetings?id=' . $meetingId);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+
+        $meetingId = (int) ($_POST['id'] ?? 0);
+        $meeting = Meeting::find($meetingId);
+        if (!$meeting) {
+            http_response_code(404);
+            echo 'Meeting not found';
+            return;
+        }
+
+        $values = $this->submittedFormValues();
+        $values['id'] = (string) $meetingId;
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['title'] === '' || $values['notes'] === '') {
+            $this->renderMeetingForm($values, 'Title and notes are required.', false, true);
+            return;
+        }
+
+        try {
+            Meeting::update($meetingId, [
+                'title' => $values['title'],
+                'meeting_type' => $values['meeting_type'],
+                'department_id' => $values['department_id'] !== '' ? (int) $values['department_id'] : null,
+                'scheduled_for' => $values['scheduled_for'] !== '' ? $values['scheduled_for'] : null,
+                'occurred_at' => $values['occurred_at'] !== '' ? $values['occurred_at'] : null,
+                'status' => $values['status'],
+                'summary' => $values['summary'] !== '' ? $values['summary'] : null,
+                'notes' => $values['notes'],
+                'source_url' => $values['source_url'] !== '' ? $values['source_url'] : null,
+            ]);
+        } catch (PDOException) {
+            $this->renderMeetingForm($values, 'Unable to update meeting right now.', true, true);
             return;
         }
 
@@ -117,7 +179,7 @@ class MeetingController extends BaseController
         }
     }
 
-    private function renderCreateForm(array $values, string $error, bool $setupRequired = false): void
+    private function renderMeetingForm(array $values, ?string $error = null, bool $setupRequired = false, bool $isEdit = false): void
     {
         try {
             $departments = Department::findAllOrdered();
@@ -132,6 +194,7 @@ class MeetingController extends BaseController
             'values' => $values,
             'error' => $error,
             'setupRequired' => $setupRequired,
+            'isEdit' => $isEdit,
         ]);
     }
 
@@ -183,5 +246,15 @@ class MeetingController extends BaseController
         $value = trim($value);
 
         return str_replace('T', ' ', $value);
+    }
+
+    private function formatDateTimeForInput(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        return substr(str_replace(' ', 'T', $value), 0, 16);
     }
 }

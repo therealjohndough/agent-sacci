@@ -1,4 +1,5 @@
 <h1 class="page-title"><?= htmlspecialchars($document['title']) ?></h1>
+<p><a href="<?= htmlspecialchars(\Config\appUrl('/documents/edit')) ?>?id=<?= urlencode((string) $document['id']) ?>" class="app-link">Edit document</a></p>
 <div class="card">
     <p class="meta-text">
         <strong>Type:</strong> <?= htmlspecialchars($document['document_type']) ?>

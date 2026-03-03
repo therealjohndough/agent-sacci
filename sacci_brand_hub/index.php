@@ -54,7 +54,9 @@ $router->add('GET',  '/dashboard/executive',[App\Controllers\ExecutiveDashboardC
 
 $router->add('GET',  '/actions',            [App\Controllers\ActionController::class, 'index']);
 $router->add('GET',  '/actions/new',        [App\Controllers\ActionController::class, 'create']);
+$router->add('GET',  '/actions/edit',       [App\Controllers\ActionController::class, 'edit']);
 $router->add('POST', '/actions',            [App\Controllers\ActionController::class, 'store']);
+$router->add('POST', '/actions/update',     [App\Controllers\ActionController::class, 'update']);
 $router->add('GET',  '/tickets',            [App\Controllers\TicketController::class, 'index']);
 
 $router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
@@ -62,14 +64,20 @@ $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::cl
 $router->add('GET',  '/departments',        [App\Controllers\DepartmentController::class, 'index']);
 $router->add('GET',  '/documents',          [App\Controllers\DocumentController::class, 'index']);
 $router->add('GET',  '/documents/new',      [App\Controllers\DocumentController::class, 'create']);
+$router->add('GET',  '/documents/edit',     [App\Controllers\DocumentController::class, 'edit']);
 $router->add('POST', '/documents',          [App\Controllers\DocumentController::class, 'store']);
+$router->add('POST', '/documents/update',   [App\Controllers\DocumentController::class, 'update']);
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
 $router->add('GET',  '/meetings/new',       [App\Controllers\MeetingController::class, 'create']);
+$router->add('GET',  '/meetings/edit',      [App\Controllers\MeetingController::class, 'edit']);
 $router->add('POST', '/meetings',           [App\Controllers\MeetingController::class, 'store']);
+$router->add('POST', '/meetings/update',    [App\Controllers\MeetingController::class, 'update']);
 $router->add('GET',  '/people',             [App\Controllers\PeopleController::class, 'index']);
 $router->add('GET',  '/reports',            [App\Controllers\ReportController::class, 'index']);
 $router->add('GET',  '/reports/new',        [App\Controllers\ReportController::class, 'create']);
+$router->add('GET',  '/reports/edit',       [App\Controllers\ReportController::class, 'edit']);
 $router->add('POST', '/reports',            [App\Controllers\ReportController::class, 'store']);
+$router->add('POST', '/reports/update',     [App\Controllers\ReportController::class, 'update']);
 $router->add('GET',  '/search',             [App\Controllers\SearchController::class, 'index']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);

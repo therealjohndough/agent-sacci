@@ -1,4 +1,4 @@
-<h1 class="page-title">New Action Item</h1>
+<h1 class="page-title"><?= !empty($isEdit) ? 'Edit Action Item' : 'New Action Item' ?></h1>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The action item form is available in code, but the database tables are not ready yet. Run migrations `007` and `008` to enable creation.
@@ -10,8 +10,11 @@
     </div>
 <?php endif; ?>
 
-<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/actions')) ?>">
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl(!empty($isEdit) ? '/actions/update' : '/actions')) ?>">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <?php if (!empty($isEdit)): ?>
+        <input type="hidden" name="id" value="<?= htmlspecialchars($values['id'] ?? '') ?>">
+    <?php endif; ?>
     <div class="card">
         <label for="title" class="form-label">Title</label>
         <input type="text" id="title" name="title" required class="form-input" value="<?= htmlspecialchars($values['title'] ?? '') ?>">
@@ -60,6 +63,6 @@
         <label for="due_date" class="form-label">Due Date</label>
         <input type="date" id="due_date" name="due_date" class="form-input" value="<?= htmlspecialchars($values['due_date'] ?? '') ?>">
 
-        <button type="submit" class="button-primary">Create Action Item</button>
+        <button type="submit" class="button-primary"><?= !empty($isEdit) ? 'Update Action Item' : 'Create Action Item' ?></button>
     </div>
 </form>

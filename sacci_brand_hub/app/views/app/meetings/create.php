@@ -1,4 +1,4 @@
-<h1 class="page-title">New Meeting</h1>
+<h1 class="page-title"><?= !empty($isEdit) ? 'Edit Meeting' : 'New Meeting' ?></h1>
 <?php if (!empty($setupRequired)): ?>
     <div class="card notice-card">
         The meeting form is available in code, but the database tables are not ready yet. Run migrations `003` through `005` to enable creation.
@@ -10,8 +10,11 @@
     </div>
 <?php endif; ?>
 
-<form method="post" action="<?= htmlspecialchars(\Config\appUrl('/meetings')) ?>">
+<form method="post" action="<?= htmlspecialchars(\Config\appUrl(!empty($isEdit) ? '/meetings/update' : '/meetings')) ?>">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf) ?>">
+    <?php if (!empty($isEdit)): ?>
+        <input type="hidden" name="id" value="<?= htmlspecialchars($values['id'] ?? '') ?>">
+    <?php endif; ?>
     <div class="card">
         <label for="title" class="form-label">Title</label>
         <input type="text" id="title" name="title" required class="form-input" value="<?= htmlspecialchars($values['title'] ?? '') ?>">
@@ -53,6 +56,6 @@
         <label for="source_url" class="form-label">Source URL</label>
         <input type="url" id="source_url" name="source_url" class="form-input" value="<?= htmlspecialchars($values['source_url'] ?? '') ?>">
 
-        <button type="submit" class="button-primary">Create Meeting</button>
+        <button type="submit" class="button-primary"><?= !empty($isEdit) ? 'Update Meeting' : 'Create Meeting' ?></button>
     </div>
 </form>

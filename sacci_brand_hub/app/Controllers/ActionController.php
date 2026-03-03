@@ -32,21 +32,34 @@ class ActionController extends BaseController
         $this->requireLogin();
 
         try {
-            $this->render('app/actions/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => Department::findAllOrdered(),
-                'meetings' => Meeting::findRecent(20),
-                'values' => $this->defaultFormValues(),
-            ]);
+            $this->renderActionForm($this->defaultFormValues());
         } catch (PDOException) {
-            $this->render('app/actions/create', [
-                'csrf' => $this->csrfToken(),
-                'departments' => [],
-                'meetings' => [],
-                'values' => $this->defaultFormValues(),
-                'setupRequired' => true,
-            ]);
+            $this->renderActionForm($this->defaultFormValues(), null, true);
         }
+    }
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+
+        $actionId = (int) ($_GET['id'] ?? 0);
+        $actionItem = ActionItem::find($actionId);
+        if (!$actionItem) {
+            http_response_code(404);
+            echo 'Action item not found';
+            return;
+        }
+
+        $this->renderActionForm([
+            'id' => (string) $actionItem['id'],
+            'title' => $actionItem['title'] ?? '',
+            'details' => $actionItem['details'] ?? '',
+            'status' => $actionItem['status'] ?? 'open',
+            'priority' => $actionItem['priority'] ?? 'medium',
+            'department_id' => $actionItem['department_id'] !== null ? (string) $actionItem['department_id'] : '',
+            'meeting_id' => ($actionItem['source_type'] ?? '') === 'meeting' && $actionItem['source_id'] !== null ? (string) $actionItem['source_id'] : '',
+            'due_date' => $actionItem['due_date'] ?? '',
+        ], null, false, true);
     }
 
     public function store(): void
@@ -61,7 +74,7 @@ class ActionController extends BaseController
         }
 
         if ($values['title'] === '') {
-            $this->renderCreateForm($values, 'Title is required.');
+            $this->renderActionForm($values, 'Title is required.');
             return;
         }
 
@@ -79,14 +92,58 @@ class ActionController extends BaseController
                 'due_date' => $values['due_date'] !== '' ? $values['due_date'] : null,
             ]);
         } catch (PDOException) {
-            $this->renderCreateForm($values, 'The actions tables are not ready yet. Run migrations first.', true);
+            $this->renderActionForm($values, 'The actions tables are not ready yet. Run migrations first.', true);
             return;
         }
 
         $this->redirect('/actions');
     }
 
-    private function renderCreateForm(array $values, string $error, bool $setupRequired = false): void
+    public function update(): void
+    {
+        $this->requireLogin();
+
+        $actionId = (int) ($_POST['id'] ?? 0);
+        $actionItem = ActionItem::find($actionId);
+        if (!$actionItem) {
+            http_response_code(404);
+            echo 'Action item not found';
+            return;
+        }
+
+        $values = $this->submittedFormValues();
+        $values['id'] = (string) $actionId;
+        $token = (string) ($_POST['_csrf'] ?? '');
+
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if ($values['title'] === '') {
+            $this->renderActionForm($values, 'Title is required.', false, true);
+            return;
+        }
+
+        try {
+            ActionItem::update($actionId, [
+                'title' => $values['title'],
+                'details' => $values['details'] !== '' ? $values['details'] : null,
+                'status' => $values['status'],
+                'priority' => $values['priority'],
+                'department_id' => $values['department_id'] !== '' ? (int) $values['department_id'] : null,
+                'source_type' => $values['meeting_id'] !== '' ? 'meeting' : 'manual',
+                'source_id' => $values['meeting_id'] !== '' ? (int) $values['meeting_id'] : null,
+                'due_date' => $values['due_date'] !== '' ? $values['due_date'] : null,
+            ]);
+        } catch (PDOException) {
+            $this->renderActionForm($values, 'Unable to update action item right now.', true, true);
+            return;
+        }
+
+        $this->redirect('/actions');
+    }
+
+    private function renderActionForm(array $values, ?string $error = null, bool $setupRequired = false, bool $isEdit = false): void
     {
         try {
             $departments = Department::findAllOrdered();
@@ -104,6 +161,7 @@ class ActionController extends BaseController
             'values' => $values,
             'error' => $error,
             'setupRequired' => $setupRequired,
+            'isEdit' => $isEdit,
         ]);
     }
 
