@@ -7,10 +7,11 @@ RewriteBase /sacci_brand_hub/
 # Block access to hidden files and VCS metadata.
 RewriteRule "(^|/)\." - [F,L]
 
-# Route application requests through the front controller, but leave
-# existing files and directories (including /static assets) untouched.
+# Route application requests through the front controller.
+# Only real files (e.g. static assets) bypass the router.
+# Directory paths (app/, core/, etc.) must also go through index.php
+# so the PHP router can handle them; without this nginx returns 403.
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
 </IfModule>
 
