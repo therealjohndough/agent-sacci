@@ -6,6 +6,23 @@ class Strain extends BaseModel
 {
     protected static string $table = 'strains';
 
+    public static function findAllOrdered(): array
+    {
+        $stmt = self::db()->query(
+            'SELECT id, name, status
+             FROM strains
+             ORDER BY
+                CASE status
+                    WHEN "active" THEN 1
+                    WHEN "draft" THEN 2
+                    ELSE 3
+                END,
+                name ASC'
+        );
+
+        return $stmt->fetchAll();
+    }
+
     public static function findAllWithCounts(): array
     {
         $stmt = self::db()->query(

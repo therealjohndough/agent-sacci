@@ -63,6 +63,12 @@ $router->add('GET',  '/tickets',            [App\Controllers\TicketController::c
 
 $router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
+$router->add('GET',  '/batches',            [App\Controllers\BatchController::class, 'index']);
+$router->add('GET',  '/batches/new',        [App\Controllers\BatchController::class, 'create']);
+$router->add('GET',  '/batches/edit',       [App\Controllers\BatchController::class, 'edit']);
+$router->add('POST', '/batches',            [App\Controllers\BatchController::class, 'store']);
+$router->add('POST', '/batches/archive',    [App\Controllers\BatchController::class, 'archive']);
+$router->add('POST', '/batches/update',     [App\Controllers\BatchController::class, 'update']);
 $router->add('GET',  '/departments',        [App\Controllers\DepartmentController::class, 'index']);
 $router->add('GET',  '/documents',          [App\Controllers\DocumentController::class, 'index']);
 $router->add('GET',  '/documents/new',      [App\Controllers\DocumentController::class, 'create']);
