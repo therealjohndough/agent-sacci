@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\ActionItem;
 use App\Models\Meeting;
 use PDOException;
 
@@ -42,6 +43,16 @@ class MeetingController extends BaseController
         $this->render('app/meetings/show', [
             'meeting' => $meeting,
             'decisions' => Meeting::findDecisions($meetingId),
+            'actionItems' => $this->findRelatedActionItems($meetingId),
         ]);
+    }
+
+    private function findRelatedActionItems(int $meetingId): array
+    {
+        try {
+            return ActionItem::findBySource('meeting', $meetingId);
+        } catch (PDOException) {
+            return [];
+        }
     }
 }

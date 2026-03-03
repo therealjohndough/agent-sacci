@@ -56,6 +56,7 @@ $router->add('GET',  '/tickets',            [App\Controllers\TicketController::c
 $router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
 
+$router->add('GET',  '/actions',            [App\Controllers\ActionController::class, 'index']);
 $router->add('GET',  '/meetings',           [App\Controllers\MeetingController::class, 'index']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
