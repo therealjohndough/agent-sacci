@@ -173,11 +173,27 @@ $router->add('GET',  '/marketing',          [App\Controllers\MarketingController
 $router->add('GET',  '/marketing/request',  [App\Controllers\MarketingController::class, 'requestForm']);
 $router->add('POST', '/marketing/request',  [App\Controllers\MarketingController::class, 'submitRequest']);
 
+$router->add('GET',  '/compliance',         [App\Controllers\ComplianceController::class, 'index']);
+
+$router->add('GET',  '/sales',              [App\Controllers\SalesController::class, 'index']);
+$router->add('GET',  '/sales/new',          [App\Controllers\SalesController::class, 'entryForm']);
+$router->add('POST', '/sales',              [App\Controllers\SalesController::class, 'storeEntry']);
+
+$router->add('GET',  '/campaigns',          [App\Controllers\CampaignController::class, 'index']);
+$router->add('GET',  '/campaigns/new',      [App\Controllers\CampaignController::class, 'create']);
+$router->add('GET',  '/campaigns/edit',     [App\Controllers\CampaignController::class, 'edit']);
+$router->add('POST', '/campaigns',          [App\Controllers\CampaignController::class, 'store']);
+$router->add('POST', '/campaigns/update',   [App\Controllers\CampaignController::class, 'update']);
+$router->add('POST', '/campaigns/archive',  [App\Controllers\CampaignController::class, 'archive']);
+
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 
 $router->add('GET',  '/content',            [App\Controllers\ContentController::class, 'index']);
 
 $router->add('GET',  '/admin/test-mail',    [App\Controllers\AdminController::class, 'testMail']);
+$router->add('GET',  '/admin/users',        [App\Controllers\AdminController::class, 'users']);
+$router->add('GET',  '/admin/users/roles',  [App\Controllers\AdminController::class, 'editUserRoles']);
+$router->add('POST', '/admin/users/roles',  [App\Controllers\AdminController::class, 'updateUserRoles']);
 
 // Dispatch based on current request
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';

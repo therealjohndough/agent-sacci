@@ -19,10 +19,13 @@ $currentPath = \Config\requestPath();
             <a href="<?= htmlspecialchars(\Config\appUrl('/products')) ?>" class="<?= (str_starts_with($currentPath, '/products') ? 'active' : '') ?>">Products</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/batches')) ?>" class="<?= (str_starts_with($currentPath, '/batches') ? 'active' : '') ?>">Batches</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/marketing')) ?>" class="<?= (str_starts_with($currentPath, '/marketing') ? 'active' : '') ?>">Marketing</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/campaigns')) ?>" class="<?= (str_starts_with($currentPath, '/campaigns') ? 'active' : '') ?>">Campaigns</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/assets')) ?>" class="<?= (str_starts_with($currentPath, '/assets') ? 'active' : '') ?>">Assets</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/meetings')) ?>" class="<?= (str_starts_with($currentPath, '/meetings') ? 'active' : '') ?>">Meetings</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/actions')) ?>" class="<?= (str_starts_with($currentPath, '/actions') ? 'active' : '') ?>">Actions</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/reports')) ?>" class="<?= (str_starts_with($currentPath, '/reports') ? 'active' : '') ?>">Reports</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/compliance')) ?>" class="<?= (str_starts_with($currentPath, '/compliance') ? 'active' : '') ?>">Compliance</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/sales')) ?>" class="<?= (str_starts_with($currentPath, '/sales') ? 'active' : '') ?>">Sales</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/documents')) ?>" class="<?= (str_starts_with($currentPath, '/documents') ? 'active' : '') ?>">Documents</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/tickets')) ?>" class="<?= (str_starts_with($currentPath, '/tickets') ? 'active' : '') ?>">Tickets</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/portal')) ?>" class="<?= (str_starts_with($currentPath, '/portal') ? 'active' : '') ?>">Portal</a>

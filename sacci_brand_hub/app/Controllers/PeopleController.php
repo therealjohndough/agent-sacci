@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Models\Setting;
+use Core\Database;
 use PDOException;
 
 class PeopleController extends BaseController
@@ -12,14 +12,21 @@ class PeopleController extends BaseController
         $this->requireLogin();
 
         try {
-            $this->render('app/people/index', [
-                'people' => Setting::getJson('team_directory_seed_v1'),
-            ]);
+            $stmt = Database::getConnection()->query(
+                "SELECT u.id, u.name, u.email, u.job_title, u.profile_summary,
+                        GROUP_CONCAT(d.name ORDER BY uda.assignment_type SEPARATOR ', ') AS departments
+                 FROM users u
+                 LEFT JOIN user_department_assignments uda ON uda.user_id = u.id
+                 LEFT JOIN departments d ON d.id = uda.department_id
+                 WHERE u.is_active = 1
+                 GROUP BY u.id
+                 ORDER BY u.name"
+            );
+            $people = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (PDOException) {
-            $this->render('app/people/index', [
-                'people' => [],
-                'setupRequired' => true,
-            ]);
+            $people = [];
         }
+
+        $this->render('app/people/index', ['people' => $people]);
     }
 }
