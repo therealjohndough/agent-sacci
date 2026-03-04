@@ -9,6 +9,114 @@ use PDOException;
 
 class ProductController extends BaseController
 {
+    public function index(): void
+    {
+        $this->requireLogin();
+
+        $id = (int) ($_GET['id'] ?? 0);
+        if ($id > 0) {
+            $this->show($id);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+
+        $strainId = isset($_GET['strain_id']) ? (int) $_GET['strain_id'] : null;
+        $type     = isset($_GET['type']) ? trim($_GET['type']) : null;
+
+        $where  = [];
+        $params = [];
+
+        if ($strainId) {
+            $where[]              = 'p.strain_id = :strain_id';
+            $params['strain_id']  = $strainId;
+        }
+        if ($type && in_array($type, ['flower', 'pre-roll', 'concentrate', 'vape'], true)) {
+            $where[]       = 'p.format = :format';
+            $params['format'] = $type;
+        }
+
+        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT p.id, p.sku, p.product_name, p.format, p.weight_label,
+                        p.notes_label, p.mood_tag, p.internal_status,
+                        s.id AS strain_id, s.name AS strain_name
+                 FROM products p
+                 JOIN strains s ON p.strain_id = s.id
+                 {$whereSql}
+                 ORDER BY s.name, p.format, p.weight_label"
+            );
+            $stmt->execute($params);
+            $products = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $strains = $pdo->query('SELECT id, name FROM strains WHERE status = \'active\' ORDER BY name')
+                          ->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (PDOException) {
+            $products = [];
+            $strains  = [];
+        }
+
+        $this->render('app/products/index', [
+            'products'        => $products,
+            'strains'         => $strains,
+            'filterStrainId'  => $strainId,
+            'filterType'      => $type,
+        ]);
+    }
+
+    private function show(int $id): void
+    {
+        $pdo = Database::getConnection();
+
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT p.*, s.id AS strain_id, s.name AS strain_name,
+                        s.category AS strain_category, s.thc_ref, s.cbg_ref, s.cbn_ref,
+                        s.terp_1_ref, s.terp_2_ref, s.terp_3_ref, s.description AS strain_description
+                 FROM products p
+                 JOIN strains s ON p.strain_id = s.id
+                 WHERE p.id = :id
+                 LIMIT 1"
+            );
+            $stmt->execute(['id' => $id]);
+            $product = $stmt->fetch(\PDO::FETCH_ASSOC);
+        } catch (PDOException) {
+            $product = null;
+        }
+
+        if (!$product) {
+            http_response_code(404);
+            echo 'Product not found';
+            return;
+        }
+
+        try {
+            $batchStmt = $pdo->prepare(
+                "SELECT b.id, b.batch_code, b.production_status, b.harvest_date,
+                        b.thc_percent, b.cbd_percent, b.cbg_percent, b.cbn_percent,
+                        b.terp_total, b.terp_1_name, b.terp_1_pct,
+                        b.terp_2_name, b.terp_2_pct, b.mood_tag,
+                        c.id AS coa_id, c.file_path AS coa_path
+                 FROM batches b
+                 LEFT JOIN coas c ON c.batch_id = b.id
+                 WHERE b.strain_id = :strain_id AND b.production_status != 'archived'
+                 ORDER BY b.id DESC
+                 LIMIT 5"
+            );
+            $batchStmt->execute(['strain_id' => $product['strain_id']]);
+            $batches = $batchStmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (PDOException) {
+            $batches = [];
+        }
+
+        $this->render('app/products/show', [
+            'product' => $product,
+            'batches' => $batches,
+        ]);
+    }
+
     public function importForm(): void
     {
         $this->requireLogin();

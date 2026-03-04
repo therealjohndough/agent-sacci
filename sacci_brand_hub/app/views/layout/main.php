@@ -15,19 +15,17 @@ $currentPath = \Config\requestPath();
     <div class="navbar">
         <div>
             <a href="<?= htmlspecialchars(\Config\appUrl('/app')) ?>" class="<?= (str_starts_with($currentPath, '/app') ? 'active' : '') ?>">Dashboard</a>
-            <a href="<?= htmlspecialchars(\Config\appUrl('/dashboard/executive')) ?>" class="<?= (str_starts_with($currentPath, '/dashboard/executive') ? 'active' : '') ?>">Executive</a>
-            <a href="<?= htmlspecialchars(\Config\appUrl('/search')) ?>" class="<?= (str_starts_with($currentPath, '/search') ? 'active' : '') ?>">Search</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/strains')) ?>" class="<?= (str_starts_with($currentPath, '/strains') ? 'active' : '') ?>">Strains</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/products')) ?>" class="<?= (str_starts_with($currentPath, '/products') ? 'active' : '') ?>">Products</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/batches')) ?>" class="<?= (str_starts_with($currentPath, '/batches') ? 'active' : '') ?>">Batches</a>
-            <a href="<?= htmlspecialchars(\Config\appUrl('/people')) ?>" class="<?= (str_starts_with($currentPath, '/people') ? 'active' : '') ?>">People</a>
-            <a href="<?= htmlspecialchars(\Config\appUrl('/departments')) ?>" class="<?= (str_starts_with($currentPath, '/departments') ? 'active' : '') ?>">Departments</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/marketing')) ?>" class="<?= (str_starts_with($currentPath, '/marketing') ? 'active' : '') ?>">Marketing</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/assets')) ?>" class="<?= (str_starts_with($currentPath, '/assets') ? 'active' : '') ?>">Assets</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/meetings')) ?>" class="<?= (str_starts_with($currentPath, '/meetings') ? 'active' : '') ?>">Meetings</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/actions')) ?>" class="<?= (str_starts_with($currentPath, '/actions') ? 'active' : '') ?>">Actions</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/reports')) ?>" class="<?= (str_starts_with($currentPath, '/reports') ? 'active' : '') ?>">Reports</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/documents')) ?>" class="<?= (str_starts_with($currentPath, '/documents') ? 'active' : '') ?>">Documents</a>
             <a href="<?= htmlspecialchars(\Config\appUrl('/tickets')) ?>" class="<?= (str_starts_with($currentPath, '/tickets') ? 'active' : '') ?>">Tickets</a>
-            <a href="<?= htmlspecialchars(\Config\appUrl('/assets')) ?>" class="<?= (str_starts_with($currentPath, '/assets') ? 'active' : '') ?>">Assets</a>
-            <a href="<?= htmlspecialchars(\Config\appUrl('/portal')) ?>" class="<?= (str_starts_with($currentPath, '/portal') ? 'active' : '') ?>">Retail Portal</a>
+            <a href="<?= htmlspecialchars(\Config\appUrl('/portal')) ?>" class="<?= (str_starts_with($currentPath, '/portal') ? 'active' : '') ?>">Portal</a>
         </div>
         <div>
             <?php if (Core\Auth::check()): ?>

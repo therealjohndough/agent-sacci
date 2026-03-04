@@ -119,6 +119,8 @@ $router->add('POST', '/actions/update',     [App\Controllers\ActionController::c
 $router->add('GET',  '/tickets',            [App\Controllers\TicketController::class, 'index']);
 
 $router->add('GET',  '/assets',             [App\Controllers\AssetController::class, 'index']);
+$router->add('GET',  '/assets/upload',      [App\Controllers\AssetController::class, 'uploadForm']);
+$router->add('POST', '/assets/upload',      [App\Controllers\AssetController::class, 'upload']);
 $router->add('GET',  '/assets/download',    [App\Controllers\AssetController::class, 'download']);
 $router->add('GET',  '/batches',            [App\Controllers\BatchController::class, 'index']);
 $router->add('GET',  '/batches/new',        [App\Controllers\BatchController::class, 'create']);
@@ -160,11 +162,16 @@ $router->add('POST', '/strains/archive',    [App\Controllers\StrainController::c
 $router->add('POST', '/strains/update',     [App\Controllers\StrainController::class, 'update']);
 $router->add('POST', '/strains/import',     [App\Controllers\StrainController::class, 'import']);
 
+$router->add('GET',  '/products',           [App\Controllers\ProductController::class, 'index']);
 $router->add('GET',  '/products/import',    [App\Controllers\ProductController::class, 'importForm']);
 $router->add('POST', '/products/import',    [App\Controllers\ProductController::class, 'import']);
 
 $router->add('GET',  '/batches/coa-upload', [App\Controllers\BatchController::class, 'coaUploadForm']);
 $router->add('POST', '/batches/coa-upload', [App\Controllers\BatchController::class, 'coaUpload']);
+
+$router->add('GET',  '/marketing',          [App\Controllers\MarketingController::class, 'index']);
+$router->add('GET',  '/marketing/request',  [App\Controllers\MarketingController::class, 'requestForm']);
+$router->add('POST', '/marketing/request',  [App\Controllers\MarketingController::class, 'submitRequest']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 
