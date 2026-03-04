@@ -81,13 +81,20 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-in
 
     // storage/ is web-accessible when it lives inside DOCUMENT_ROOT.
     if (str_starts_with($storagePath, $docRoot)) {
-        error_log(
-            'CRITICAL SECURITY WARNING: sacci_brand_hub/storage/ is inside the web '
-            . 'document root (' . $docRoot . ') and may be directly accessible via HTTP. '
-            . 'Move storage/ above the document root or add an .htaccess that denies all access.'
-        );
-        // Persist the flag for the current request so controllers can read it.
-        $_SERVER['_STORAGE_EXPOSED'] = true;
+        // Suppress the warning if storage/.htaccess already denies all access.
+        $htaccess = __DIR__ . '/storage/.htaccess';
+        $htaccessContent = is_file($htaccess) ? file_get_contents($htaccess) : '';
+        $protected = stripos($htaccessContent, 'Deny from all') !== false
+                  || stripos($htaccessContent, 'Require all denied') !== false;
+
+        if (!$protected) {
+            error_log(
+                'CRITICAL SECURITY WARNING: sacci_brand_hub/storage/ is inside the web '
+                . 'document root (' . $docRoot . ') and may be directly accessible via HTTP. '
+                . 'Move storage/ above the document root or add an .htaccess that denies all access.'
+            );
+            $_SERVER['_STORAGE_EXPOSED'] = true;
+        }
     }
 })();
 
