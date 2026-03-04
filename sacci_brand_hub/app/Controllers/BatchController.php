@@ -226,24 +226,7 @@ class BatchController extends BaseController
             return;
         }
 
-        // Insert coas record first
-        $coaId = (int) $pdo->query("SELECT LAST_INSERT_ID()")->fetchColumn(); // placeholder
-        try {
-            $stmt = $pdo->prepare(
-                "INSERT INTO coas (strain_id, file_path, status, parse_source, created_at, updated_at)
-                 VALUES (:strain_id, :file_path, 'received', 'ai', NOW(), NOW())"
-            );
-            $stmt->execute([
-                'strain_id' => $strainId,
-                'file_path' => 'storage/coas/' . $filename,
-            ]);
-            $coaId = (int) $pdo->lastInsertId();
-        } catch (\Exception $e) {
-            $this->renderCoaUploadError('Could not save COA record: ' . htmlspecialchars($e->getMessage()), $strainId);
-            return;
-        }
-
-        // Parse with Claude
+        // Parse with Claude first (before any DB writes)
         try {
             $parsed = CoaParser::parse($destPath);
         } catch (\RuntimeException $e) {
@@ -256,9 +239,9 @@ class BatchController extends BaseController
             ? TerpeneVibeMap::tag($parsed['terp_1_name'])
             : null;
 
-        // Insert batch
+        // Create batch record
         try {
-            $batchData = [
+            $batchId = Batch::create([
                 'strain_id'          => $strainId,
                 'batch_code'         => $parsed['batch_number'] ?? ('COA-' . date('Ymd-His')),
                 'production_status'  => 'received',
@@ -274,24 +257,25 @@ class BatchController extends BaseController
                 'terp_3_name'        => $parsed['terp_3_name'] ?? null,
                 'terp_3_pct'         => $parsed['terp_3_pct'] ?? null,
                 'mood_tag'           => $moodTag,
-            ];
-            $batchId = Batch::create($batchData);
+            ]);
         } catch (\Exception $e) {
             $this->renderCoaUploadError('Could not save batch: ' . htmlspecialchars($e->getMessage()), $strainId);
             return;
         }
 
-        // Update coa record with batch_id, parsed_at, parse_raw
+        // Insert coas record now that we have a batch_id
         try {
             $pdo->prepare(
-                "UPDATE coas SET batch_id = :batch_id, parsed_at = NOW(), parse_raw = :raw, updated_at = NOW() WHERE id = :id"
+                "INSERT INTO coas (batch_id, file_path, status, parse_source, parsed_at, parse_raw, created_at, updated_at)
+                 VALUES (:batch_id, :file_path, 'received', 'ai', NOW(), :raw, NOW(), NOW())"
             )->execute([
-                'batch_id' => $batchId,
-                'raw'      => $parsed['raw'] ?? null,
-                'id'       => $coaId,
+                'batch_id'  => $batchId,
+                'file_path' => 'storage/coas/' . $filename,
+                'raw'       => $parsed['raw'] ?? null,
             ]);
-        } catch (\Exception) {
-            // Non-fatal; batch was created
+        } catch (\Exception $e) {
+            // Non-fatal — batch was created, just log and continue
+            error_log('COA record insert failed: ' . $e->getMessage());
         }
 
         $this->redirect('/batches?id=' . $batchId);
