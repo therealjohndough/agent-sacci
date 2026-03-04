@@ -5,6 +5,9 @@ namespace App\Controllers;
 use App\Models\Batch;
 use App\Models\Strain;
 use Core\Csrf;
+use Core\CoaParser;
+use Core\TerpeneVibeMap;
+use Core\Database;
 use PDOException;
 
 class BatchController extends BaseController
@@ -148,6 +151,152 @@ class BatchController extends BaseController
         $this->redirect('/batches?id=' . $batchId);
     }
 
+    public function coaUploadForm(): void
+    {
+        $this->requireLogin();
+
+        try {
+            $strains = Strain::findAllOrdered();
+        } catch (PDOException) {
+            $strains = [];
+        }
+
+        $this->render('app/batches/coa_upload', [
+            'csrf'    => $this->csrfToken(),
+            'strains' => $strains,
+        ]);
+    }
+
+    public function coaUpload(): void
+    {
+        $this->requireLogin();
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        $strainId = (int) ($_POST['strain_id'] ?? 0);
+        if ($strainId <= 0) {
+            $this->renderCoaUploadError('Please select a strain.', $strainId);
+            return;
+        }
+
+        if (empty($_FILES['coa_pdf']['tmp_name'])) {
+            $this->renderCoaUploadError('No PDF uploaded.', $strainId);
+            return;
+        }
+
+        $tmpPath = $_FILES['coa_pdf']['tmp_name'];
+        $origName = basename($_FILES['coa_pdf']['name'] ?? 'coa.pdf');
+
+        // Validate PDF
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $tmpPath);
+        finfo_close($finfo);
+        if ($mime !== 'application/pdf') {
+            $this->renderCoaUploadError('Uploaded file must be a PDF.', $strainId);
+            return;
+        }
+
+        if (filesize($tmpPath) > 10 * 1024 * 1024) {
+            $this->renderCoaUploadError('PDF must be 10 MB or smaller.', $strainId);
+            return;
+        }
+
+        // Fetch strain slug for filename
+        $pdo = Database::getConnection();
+        $strainRow = $pdo->prepare('SELECT slug FROM strains WHERE id = :id LIMIT 1');
+        $strainRow->execute(['id' => $strainId]);
+        $strain = $strainRow->fetch();
+        if (!$strain) {
+            $this->renderCoaUploadError('Strain not found.', $strainId);
+            return;
+        }
+
+        // Save to storage/coas/
+        $storageDir = __DIR__ . '/../../storage/coas';
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0755, true);
+        }
+        $filename = $strain['slug'] . '_' . time() . '.pdf';
+        $destPath = $storageDir . '/' . $filename;
+        if (!move_uploaded_file($tmpPath, $destPath)) {
+            $this->renderCoaUploadError('Could not save uploaded file.', $strainId);
+            return;
+        }
+
+        // Insert coas record first
+        $coaId = (int) $pdo->query("SELECT LAST_INSERT_ID()")->fetchColumn(); // placeholder
+        try {
+            $stmt = $pdo->prepare(
+                "INSERT INTO coas (strain_id, file_path, status, parse_source, created_at, updated_at)
+                 VALUES (:strain_id, :file_path, 'received', 'ai', NOW(), NOW())"
+            );
+            $stmt->execute([
+                'strain_id' => $strainId,
+                'file_path' => 'storage/coas/' . $filename,
+            ]);
+            $coaId = (int) $pdo->lastInsertId();
+        } catch (\Exception $e) {
+            $this->renderCoaUploadError('Could not save COA record: ' . htmlspecialchars($e->getMessage()), $strainId);
+            return;
+        }
+
+        // Parse with Claude
+        try {
+            $parsed = CoaParser::parse($destPath);
+        } catch (\RuntimeException $e) {
+            $this->renderCoaUploadError('COA parsing failed: ' . htmlspecialchars($e->getMessage()), $strainId);
+            return;
+        }
+
+        // Derive mood_tag from dominant terpene
+        $moodTag = !empty($parsed['terp_1_name'])
+            ? TerpeneVibeMap::tag($parsed['terp_1_name'])
+            : null;
+
+        // Insert batch
+        try {
+            $batchData = [
+                'strain_id'          => $strainId,
+                'batch_code'         => $parsed['batch_number'] ?? ('COA-' . date('Ymd-His')),
+                'production_status'  => 'received',
+                'thc_percent'        => $parsed['thc_percent'] ?? null,
+                'cbd_percent'        => $parsed['cbd_percent'] ?? null,
+                'cbg_percent'        => $parsed['cbg_percent'] ?? null,
+                'cbn_percent'        => $parsed['cbn_percent'] ?? null,
+                'terp_total'         => $parsed['terp_total_percent'] ?? null,
+                'terp_1_name'        => $parsed['terp_1_name'] ?? null,
+                'terp_1_pct'         => $parsed['terp_1_pct'] ?? null,
+                'terp_2_name'        => $parsed['terp_2_name'] ?? null,
+                'terp_2_pct'         => $parsed['terp_2_pct'] ?? null,
+                'terp_3_name'        => $parsed['terp_3_name'] ?? null,
+                'terp_3_pct'         => $parsed['terp_3_pct'] ?? null,
+                'mood_tag'           => $moodTag,
+            ];
+            $batchId = Batch::create($batchData);
+        } catch (\Exception $e) {
+            $this->renderCoaUploadError('Could not save batch: ' . htmlspecialchars($e->getMessage()), $strainId);
+            return;
+        }
+
+        // Update coa record with batch_id, parsed_at, parse_raw
+        try {
+            $pdo->prepare(
+                "UPDATE coas SET batch_id = :batch_id, parsed_at = NOW(), parse_raw = :raw, updated_at = NOW() WHERE id = :id"
+            )->execute([
+                'batch_id' => $batchId,
+                'raw'      => $parsed['raw'] ?? null,
+                'id'       => $coaId,
+            ]);
+        } catch (\Exception) {
+            // Non-fatal; batch was created
+        }
+
+        $this->redirect('/batches?id=' . $batchId);
+    }
+
     public function archive(): void
     {
         $this->requireLogin();
@@ -235,5 +384,21 @@ class BatchController extends BaseController
             'cbd_percent' => trim((string) ($_POST['cbd_percent'] ?? '')),
             'notes' => trim((string) ($_POST['notes'] ?? '')),
         ];
+    }
+
+    private function renderCoaUploadError(string $error, int $strainId = 0): void
+    {
+        try {
+            $strains = Strain::findAllOrdered();
+        } catch (PDOException) {
+            $strains = [];
+        }
+
+        $this->render('app/batches/coa_upload', [
+            'csrf'             => $this->csrfToken(),
+            'strains'          => $strains,
+            'error'            => $error,
+            'selected_strain'  => $strainId,
+        ]);
     }
 }

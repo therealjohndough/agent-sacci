@@ -154,9 +154,17 @@ $router->add('GET',  '/search',             [App\Controllers\SearchController::c
 $router->add('GET',  '/strains',            [App\Controllers\StrainController::class, 'index']);
 $router->add('GET',  '/strains/new',        [App\Controllers\StrainController::class, 'create']);
 $router->add('GET',  '/strains/edit',       [App\Controllers\StrainController::class, 'edit']);
+$router->add('GET',  '/strains/import',     [App\Controllers\StrainController::class, 'importForm']);
 $router->add('POST', '/strains',            [App\Controllers\StrainController::class, 'store']);
 $router->add('POST', '/strains/archive',    [App\Controllers\StrainController::class, 'archive']);
 $router->add('POST', '/strains/update',     [App\Controllers\StrainController::class, 'update']);
+$router->add('POST', '/strains/import',     [App\Controllers\StrainController::class, 'import']);
+
+$router->add('GET',  '/products/import',    [App\Controllers\ProductController::class, 'importForm']);
+$router->add('POST', '/products/import',    [App\Controllers\ProductController::class, 'import']);
+
+$router->add('GET',  '/batches/coa-upload', [App\Controllers\BatchController::class, 'coaUploadForm']);
+$router->add('POST', '/batches/coa-upload', [App\Controllers\BatchController::class, 'coaUpload']);
 
 $router->add('GET',  '/portal',             [App\Controllers\PortalController::class, 'index']);
 

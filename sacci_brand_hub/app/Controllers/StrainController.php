@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Strain;
 use Core\Csrf;
+use Core\Database;
 use PDOException;
 
 class StrainController extends BaseController
@@ -165,6 +166,112 @@ class StrainController extends BaseController
         $this->redirect('/strains');
     }
 
+    public function importForm(): void
+    {
+        $this->requireLogin();
+        $this->render('app/strains/import', [
+            'csrf' => $this->csrfToken(),
+        ]);
+    }
+
+    public function import(): void
+    {
+        $this->requireLogin();
+
+        $token = (string) ($_POST['_csrf'] ?? '');
+        if (!Csrf::validate($token)) {
+            die('Invalid CSRF token');
+        }
+
+        if (empty($_FILES['csv']['tmp_name'])) {
+            $this->render('app/strains/import', [
+                'csrf'  => $this->csrfToken(),
+                'error' => 'No file uploaded.',
+            ]);
+            return;
+        }
+
+        $handle = fopen($_FILES['csv']['tmp_name'], 'r');
+        if ($handle === false) {
+            $this->render('app/strains/import', [
+                'csrf'  => $this->csrfToken(),
+                'error' => 'Could not read uploaded file.',
+            ]);
+            return;
+        }
+
+        // Skip header row
+        fgetcsv($handle);
+
+        $pdo      = Database::getConnection();
+        $inserted = 0;
+        $updated  = 0;
+        $errors   = [];
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 12) {
+                continue;
+            }
+
+            [
+                $name, $category, $geneticsA, $geneticsB,
+                $lineageNotes, $thcRaw, $cbgRaw, $cbnRaw,
+                $terp1, $terp2, $terp3, $description,
+            ] = array_pad($row, 12, '');
+
+            $name = trim($name);
+            if ($name === '') {
+                continue;
+            }
+
+            $slug    = $this->pureSlug($name);
+            $lineage = trim($geneticsA);
+            if (trim($geneticsB) !== '') {
+                $lineage .= ' x ' . trim($geneticsB);
+            }
+
+            $data = [
+                'name'        => $name,
+                'slug'        => $slug,
+                'category'    => trim($category) !== '' ? trim($category) : null,
+                'lineage'     => $lineage !== '' ? $lineage : null,
+                'awards'      => trim($lineageNotes) !== '' ? trim($lineageNotes) : null,
+                'description' => trim($description) !== '' ? trim($description) : null,
+                'thc_ref'     => $this->parsePct($thcRaw),
+                'cbg_ref'     => $this->parsePct($cbgRaw),
+                'cbn_ref'     => $this->parsePct($cbnRaw),
+                'terp_1_ref'  => trim($terp1) !== '' ? trim($terp1) : null,
+                'terp_2_ref'  => trim($terp2) !== '' ? trim($terp2) : null,
+                'terp_3_ref'  => trim($terp3) !== '' ? trim($terp3) : null,
+                'status'      => 'active',
+            ];
+
+            try {
+                $existing = $pdo->prepare('SELECT id FROM strains WHERE slug = :slug LIMIT 1');
+                $existing->execute(['slug' => $slug]);
+                $row = $existing->fetch();
+
+                if ($row) {
+                    unset($data['slug']); // don't change slug on update
+                    Strain::update((int) $row['id'], $data);
+                    $updated++;
+                } else {
+                    Strain::create($data);
+                    $inserted++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = htmlspecialchars($name) . ': ' . htmlspecialchars($e->getMessage());
+            }
+        }
+
+        fclose($handle);
+
+        $this->render('app/strains/import', [
+            'csrf'     => $this->csrfToken(),
+            'result'   => compact('inserted', 'updated', 'errors'),
+        ]);
+    }
+
     private function show(int $strainId): void
     {
         $strain = Strain::findWithCounts($strainId);
@@ -226,5 +333,24 @@ class StrainController extends BaseController
         }
 
         return $slug . '-' . date('YmdHis');
+    }
+
+    /** Slug without timestamp suffix — used for CSV import upserts. */
+    private function pureSlug(string $name): string
+    {
+        $slug = strtolower(trim($name));
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
+        $slug = trim($slug, '-');
+        return $slug !== '' ? $slug : 'strain';
+    }
+
+    /** Parse a percentage string like "30%", "<1%", "1.2%" → float or null. */
+    private function parsePct(string $value): ?float
+    {
+        $v = trim($value);
+        if ($v === '' || $v === '<1%' || $v === '<1') {
+            return null;
+        }
+        return (float) rtrim($v, '%');
     }
 }
